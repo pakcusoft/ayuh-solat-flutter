@@ -44,10 +44,13 @@ class WidgetService {
         await HomeWidget.saveWidgetData<String>('hijri', prayerTime.hijri);
         await HomeWidget.saveWidgetData<String>('lastUpdate', DateTime.now().toString());
 
-        // Find next prayer
+        // Find next prayer and current prayer
+        final syuruk = _formatTime(prayerTime.syuruk);
         final nextPrayer = _findNextPrayer(fajr, dhuhr, asr, maghrib, isha);
+        final currentPrayer = _findCurrentPrayer(fajr, syuruk, dhuhr, asr, maghrib, isha);
         await HomeWidget.saveWidgetData<String>('nextPrayer', nextPrayer['name']);
         await HomeWidget.saveWidgetData<String>('nextPrayerTime', nextPrayer['time']);
+        await HomeWidget.saveWidgetData<String>('currentPrayer', currentPrayer);
 
         // Update the actual widget
         await HomeWidget.updateWidget(
@@ -87,6 +90,40 @@ class WidgetService {
 
     // If all prayers have passed, next prayer is tomorrow's Fajr
     return {'name': 'Fajr', 'time': fajr};
+  }
+
+  // Find the current prayer based on current time
+  static String _findCurrentPrayer(String fajr, String syuruk, String dhuhr, String asr, String maghrib, String isha) {
+    final now = DateTime.now();
+    final currentTime = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+    
+    final prayers = [
+      {'name': 'Fajr', 'time': fajr},
+      {'name': 'Dhuhr', 'time': dhuhr},
+      {'name': 'Asr', 'time': asr},
+      {'name': 'Maghrib', 'time': maghrib},
+      {'name': 'Isha', 'time': isha},
+    ];
+
+    String currentPrayer = '';
+    
+    // Find current active prayer (most recent prayer that has passed)
+    for (int i = 0; i < prayers.length; i++) {
+      final prayerTime = prayers[i]['time']!;
+      final prayerName = prayers[i]['name']!;
+      
+      // Check if current time is after this prayer time
+      if (_compareTime(currentTime, prayerTime) >= 0) {
+        currentPrayer = prayerName;
+        
+        // Special case for Fajr: if Syuruk has passed, Fajr is no longer current
+        if (prayerName == 'Fajr' && _compareTime(currentTime, syuruk) >= 0) {
+          currentPrayer = '';
+        }
+      }
+    }
+    
+    return currentPrayer;
   }
 
   // Compare two time strings in HH:MM format
