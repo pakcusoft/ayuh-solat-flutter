@@ -23,6 +23,7 @@ class MyApp extends StatelessWidget {
           seedColor: Colors.teal,
           brightness: Brightness.light,
         ),
+        fontFamily: 'UbuntuCondensed',
         useMaterial3: true,
       ),
       home: const PrayerTimesScreen(),
