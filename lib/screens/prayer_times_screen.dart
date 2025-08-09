@@ -5,6 +5,7 @@ import '../services/prayer_time_service.dart';
 import '../services/preferences_service.dart';
 import '../services/widget_service.dart';
 import 'settings_screen.dart';
+import 'prayer_detail_screen.dart';
 
 class PrayerTimesScreen extends StatefulWidget {
   const PrayerTimesScreen({super.key});
@@ -20,6 +21,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with WidgetsBindi
   String? _error;
   Timer? _midnightTimer;
   DateTime? _lastRefreshDate;
+  Timer? _currentTimeTimer;
+  String? _currentPrayer;
 
   @override
   void initState() {
@@ -28,12 +31,14 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with WidgetsBindi
     _loadZoneAndFetchPrayerTimes();
     _setupMidnightTimer();
     _setupWeeklyCacheUpdate();
+    _startCurrentTimeTimer();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _midnightTimer?.cancel();
+    _currentTimeTimer?.cancel();
     super.dispose();
   }
 
@@ -93,6 +98,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with WidgetsBindi
       // Update widget after successful prayer times fetch
       if (response != null) {
         WidgetService.updateWidget();
+        // Update current prayer highlighting after data is loaded
+        _updateCurrentPrayer();
       }
     } catch (e) {
       setState(() {
@@ -159,42 +166,230 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with WidgetsBindi
     }
   }
 
+  void _startCurrentTimeTimer() {
+    // Start the timer first
+    _currentTimeTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (mounted) {
+        _updateCurrentPrayer();
+      }
+    });
+    // Initial update will be called after data is loaded in _fetchPrayerTimes
+  }
+
+  void _updateCurrentPrayer() {
+    if (_prayerTimeResponse == null || _prayerTimeResponse!.prayerTimes.isEmpty) return;
+
+    final prayerTime = _prayerTimeResponse!.prayerTimes.first;
+    final now = DateTime.now();
+    final prayers = [
+      {'name': 'Fajr', 'time': prayerTime.fajr},
+      {'name': 'Syuruk', 'time': prayerTime.syuruk},
+      {'name': 'Dhuhr', 'time': prayerTime.dhuhr},
+      {'name': 'Asr', 'time': prayerTime.asr},
+      {'name': 'Maghrib', 'time': prayerTime.maghrib},
+      {'name': 'Isha', 'time': prayerTime.isha},
+    ];
+
+    String? currentPrayer;
+    
+    // Find the current active prayer (prayer time has passed but next prayer hasn't started)
+    for (int i = 0; i < prayers.length; i++) {
+      final prayerDateTime = _parsePrayerTime(prayers[i]['time'] as String);
+      if (prayerDateTime == null) continue;
+      
+      final prayerName = prayers[i]['name'] as String;
+      
+      if (prayerDateTime.isBefore(now) || prayerDateTime.isAtSameMomentAs(now)) {
+        // This prayer time has started
+        if (i < prayers.length - 1) {
+          // Check if next prayer has started
+          final nextPrayerDateTime = _parsePrayerTime(prayers[i + 1]['time'] as String);
+          if (nextPrayerDateTime != null && now.isBefore(nextPrayerDateTime)) {
+            // Current prayer is active (started but next prayer hasn't)
+            currentPrayer = prayerName;
+            break;
+          }
+        } else {
+          // This is Isha (last prayer), it's active until midnight
+          currentPrayer = prayerName;
+          break;
+        }
+      }
+    }
+    
+    // If no prayer is currently active, check for upcoming prayer (within 15 minutes)
+    if (currentPrayer == null) {
+      for (int i = 0; i < prayers.length; i++) {
+        final prayerDateTime = _parsePrayerTime(prayers[i]['time'] as String);
+        if (prayerDateTime == null) continue;
+        
+        if (prayerDateTime.isAfter(now)) {
+          final minutesToPrayer = prayerDateTime.difference(now).inMinutes;
+          if (minutesToPrayer <= 15) {
+            // Prayer is coming up within 15 minutes
+            currentPrayer = prayers[i]['name'] as String;
+          }
+          break;
+        }
+      }
+    }
+
+    if (currentPrayer != _currentPrayer) {
+      setState(() {
+        _currentPrayer = currentPrayer;
+      });
+    }
+  }
+
+  DateTime? _parseTime(String timeString) {
+    try {
+      final parts = timeString.split(':');
+      if (parts.length >= 2) {
+        return DateTime(
+          DateTime.now().year,
+          DateTime.now().month,
+          DateTime.now().day,
+          int.parse(parts[0]),
+          int.parse(parts[1]),
+        );
+      }
+    } catch (e) {
+      // Handle parsing error
+    }
+    return null;
+  }
+
+  DateTime? _parsePrayerTime(String timeString) {
+    try {
+      final parts = timeString.split(':');
+      if (parts.length >= 2) {
+        final now = DateTime.now();
+        var prayerDateTime = DateTime(
+          now.year,
+          now.month,
+          now.day,
+          int.parse(parts[0]),
+          int.parse(parts[1]),
+        );
+        
+        // Handle Fajr prayer which might be tomorrow if it already passed today
+        if (prayerDateTime.isBefore(now) && timeString == _prayerTimeResponse!.prayerTimes.first.fajr) {
+          prayerDateTime = prayerDateTime.add(const Duration(days: 1));
+        }
+        
+        return prayerDateTime;
+      }
+    } catch (e) {
+      // Handle parsing error
+    }
+    return null;
+  }
+
   Widget _buildPrayerTimeCard(String prayerName, String time, IconData icon, Color color) {
-    return Card(
-      elevation: 2,
-      child: Container(
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          gradient: LinearGradient(
-            colors: [color.withOpacity(0.1), color.withOpacity(0.05)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 32, color: color),
-            const SizedBox(height: 8),
-            Text(
-              prayerName,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[700],
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              _formatTime(time),
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+    final isCurrentPrayer = _currentPrayer == prayerName;
+    
+    return GestureDetector(
+      onTap: () {
+        if (_prayerTimeResponse != null && _prayerTimeResponse!.prayerTimes.isNotEmpty) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PrayerDetailScreen(
+                prayerName: prayerName,
+                prayerTime: time,
+                prayerTimeData: _prayerTimeResponse!.prayerTimes.first,
+                icon: icon,
                 color: color,
               ),
             ),
-          ],
+          );
+        }
+      },
+      child: Card(
+        elevation: isCurrentPrayer ? 6 : 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: isCurrentPrayer 
+              ? BorderSide(color: color, width: 2)
+              : BorderSide.none,
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(16.0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            gradient: LinearGradient(
+              colors: isCurrentPrayer 
+                  ? [color.withOpacity(0.2), color.withOpacity(0.1)]
+                  : [color.withOpacity(0.1), color.withOpacity(0.05)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Stack(
+                children: [
+                  Icon(icon, size: 28, color: color),
+                  if (isCurrentPrayer)
+                    Positioned(
+                      right: -3,
+                      top: -3,
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: Colors.orange,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 1.5),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                prayerName,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: isCurrentPrayer ? color : Colors.grey[700],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 3),
+              Text(
+                _formatTime(time),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              if (isCurrentPrayer)
+                Container(
+                  margin: const EdgeInsets.only(top: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'CURRENT',
+                    style: TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.orange[700],
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

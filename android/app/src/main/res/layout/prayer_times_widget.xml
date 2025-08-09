@@ -3,102 +3,143 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="horizontal"
+    android:gravity="center"
     android:padding="8dp"
-    android:background="@android:color/transparent">
+    android:background="#FFFFFF">
 
-    <TextView
-        android:id="@+id/fajr_label"
+    <!-- Fajr -->
+    <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:text="Fajr"
-        android:fontFamily="@font/ubuntu_condensed_regular"
-        android:textColor="@android:color/white"
-        android:textSize="12sp" />
+        android:orientation="vertical"
+        android:gravity="center">
+        
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Fajr"
+            android:textColor="#2E7D32"
+            android:textSize="10sp"
+            android:textStyle="bold"/>
+            
+        <TextView
+            android:id="@+id/fajr_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="05:50"
+            android:textColor="#333333"
+            android:textSize="12sp"
+            android:textStyle="bold"/>
+            
+    </LinearLayout>
 
-    <TextView
-        android:id="@+id/fajr_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="06:00"
-        android:fontFamily="@font/ubuntu_condensed_regular"
-        android:textColor="@android:color/white"
-        android:textSize="12sp" />
-
-    <TextView
-        android:id="@+id/dhuhr_label"
+    <!-- Dhuhr -->
+    <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:text="Dhuhr"
-        android:fontFamily="@font/ubuntu_condensed_regular"
-        android:textColor="@android:color/white"
-        android:textSize="12sp" />
+        android:orientation="vertical"
+        android:gravity="center">
+        
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Dhuhr"
+            android:textColor="#2E7D32"
+            android:textSize="10sp"
+            android:textStyle="bold"/>
+            
+        <TextView
+            android:id="@+id/dhuhr_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="13:07"
+            android:textColor="#333333"
+            android:textSize="12sp"
+            android:textStyle="bold"/>
+            
+    </LinearLayout>
 
-    <TextView
-        android:id="@+id/dhuhr_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="13:00"
-        android:fontFamily="@font/ubuntu_condensed_regular"
-        android:textColor="@android:color/white"
-        android:textSize="12sp" />
-
-    <TextView
-        android:id="@+id/asr_label"
+    <!-- Asr -->
+    <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:text="Asr"
-        android:fontFamily="@font/ubuntu_condensed_regular"
-        android:textColor="@android:color/white"
-        android:textSize="12sp" />
+        android:orientation="vertical"
+        android:gravity="center">
+        
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Asr"
+            android:textColor="#2E7D32"
+            android:textSize="10sp"
+            android:textStyle="bold"/>
+            
+        <TextView
+            android:id="@+id/asr_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="16:28"
+            android:textColor="#333333"
+            android:textSize="12sp"
+            android:textStyle="bold"/>
+            
+    </LinearLayout>
 
-    <TextView
-        android:id="@+id/asr_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="16:00"
-        android:fontFamily="@font/ubuntu_condensed_regular"
-        android:textColor="@android:color/white"
-        android:textSize="12sp" />
-
-    <TextView
-        android:id="@+id/maghrib_label"
+    <!-- Maghrib -->
+    <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:text="Maghrib"
-        android:fontFamily="@font/ubuntu_condensed_regular"
-        android:textColor="@android:color/white"
-        android:textSize="12sp" />
+        android:orientation="vertical"
+        android:gravity="center">
+        
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Maghrib"
+            android:textColor="#2E7D32"
+            android:textSize="10sp"
+            android:textStyle="bold"/>
+            
+        <TextView
+            android:id="@+id/maghrib_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="19:20"
+            android:textColor="#333333"
+            android:textSize="12sp"
+            android:textStyle="bold"/>
+            
+    </LinearLayout>
 
-    <TextView
-        android:id="@+id/maghrib_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="19:00"
-        android:fontFamily="@font/ubuntu_condensed_regular"
-        android:textColor="@android:color/white"
-        android:textSize="12sp" />
-
-    <TextView
-        android:id="@+id/isha_label"
+    <!-- Isha -->
+    <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:text="Isha"
-        android:fontFamily="@font/ubuntu_condensed_regular"
-        android:textColor="@android:color/white"
-        android:textSize="12sp" />
-
-    <TextView
-        android:id="@+id/isha_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="20:00"
-        android:fontFamily="@font/ubuntu_condensed_regular"
-        android:textColor="@android:color/white"
-        android:textSize="12sp" />
+        android:orientation="vertical"
+        android:gravity="center">
+        
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Isha"
+            android:textColor="#2E7D32"
+            android:textSize="10sp"
+            android:textStyle="bold"/>
+            
+        <TextView
+            android:id="@+id/isha_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="20:35"
+            android:textColor="#333333"
+            android:textSize="12sp"
+            android:textStyle="bold"/>
+            
+    </LinearLayout>
 
 </LinearLayout>

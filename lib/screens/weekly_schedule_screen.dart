@@ -130,120 +130,195 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
     );
   }
 
-  Widget _buildWeeklyTable() {
+  Widget _buildWeeklyTables() {
     if (_weeklyPrayerTimes.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.calendar_view_week,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header
+        Card(
+          elevation: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.calendar_view_week,
+                  color: Theme.of(context).primaryColor,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Next 7 Days Prayer Schedule',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                     color: Theme.of(context).primaryColor,
-                    size: 20,
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Next 7 Days Prayer Schedule',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).primaryColor,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-            const Divider(),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                headingRowHeight: 50,
-                dataRowMaxHeight: 60,
-                columnSpacing: 20,
-                headingTextStyle: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Individual day cards
+        ..._weeklyPrayerTimes.map((prayerTime) => _buildDayCard(prayerTime)).toList(),
+      ],
+    );
+  }
+
+  Widget _buildDayCard(PrayerTime prayerTime) {
+    final isToday = _isToday(prayerTime.date);
+    
+    return Card(
+      elevation: isToday ? 4 : 2,
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Container(
+        decoration: isToday 
+            ? BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Theme.of(context).primaryColor.withOpacity(0.3),
+                  width: 2,
                 ),
-                dataTextStyle: const TextStyle(
-                  fontSize: 11,
-                ),
-                columns: const [
-                  DataColumn(label: Text('Date')),
-                  DataColumn(label: Text('Day')),
-                  DataColumn(label: Text('Fajr')),
-                  DataColumn(label: Text('Syuruk')),
-                  DataColumn(label: Text('Dhuhr')),
-                  DataColumn(label: Text('Asr')),
-                  DataColumn(label: Text('Maghrib')),
-                  DataColumn(label: Text('Isha')),
-                ],
-                rows: _weeklyPrayerTimes.map((prayerTime) {
-                  final isToday = _isToday(prayerTime.date);
-                  return DataRow(
-                    color: WidgetStateProperty.resolveWith<Color?>(
-                      (Set<WidgetState> states) {
-                        if (isToday) {
-                          return Theme.of(context).primaryColor.withOpacity(0.1);
-                        }
-                        return null;
-                      },
+              )
+            : null,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Date header
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: isToday 
+                          ? Theme.of(context).primaryColor
+                          : Theme.of(context).primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    cells: [
-                      DataCell(
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _formatDisplayDate(prayerTime.date),
-                              style: TextStyle(
-                                fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                                color: isToday ? Theme.of(context).primaryColor : null,
-                              ),
-                            ),
-                            Text(
-                              prayerTime.hijri,
-                              style: TextStyle(
-                                fontSize: 9,
-                                color: Colors.grey[600],
-                                fontWeight: isToday ? FontWeight.w500 : FontWeight.normal,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      DataCell(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (isToday)
+                          Icon(
+                            Icons.today,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                        if (isToday) const SizedBox(width: 4),
                         Text(
-                          _getShortDay(prayerTime.day),
+                          '${_getFullDay(prayerTime.day)}, ${_formatFullDisplayDate(prayerTime.date)}',
                           style: TextStyle(
-                            fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                            color: isToday ? Theme.of(context).primaryColor : null,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: isToday ? Colors.white : Theme.of(context).primaryColor,
                           ),
                         ),
-                      ),
-                      DataCell(_buildTimeCell(prayerTime.fajr, isToday)),
-                      DataCell(_buildTimeCell(prayerTime.syuruk, isToday)),
-                      DataCell(_buildTimeCell(prayerTime.dhuhr, isToday)),
-                      DataCell(_buildTimeCell(prayerTime.asr, isToday)),
-                      DataCell(_buildTimeCell(prayerTime.maghrib, isToday)),
-                      DataCell(_buildTimeCell(prayerTime.isha, isToday)),
-                    ],
-                  );
-                }).toList(),
+                      ],
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    prayerTime.hijri,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              // Prayer times grid
+              _buildPrayerTimesGrid(prayerTime, isToday),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildPrayerTimesGrid(PrayerTime prayerTime, bool isToday) {
+    final prayerData = [
+      {'name': 'Fajr', 'time': prayerTime.fajr, 'icon': Icons.brightness_2},
+      {'name': 'Syuruk', 'time': prayerTime.syuruk, 'icon': Icons.wb_sunny},
+      {'name': 'Dhuhr', 'time': prayerTime.dhuhr, 'icon': Icons.wb_sunny_outlined},
+      {'name': 'Asr', 'time': prayerTime.asr, 'icon': Icons.brightness_6},
+      {'name': 'Maghrib', 'time': prayerTime.maghrib, 'icon': Icons.brightness_4},
+      {'name': 'Isha', 'time': prayerTime.isha, 'icon': Icons.brightness_2_outlined},
+    ];
+
+    return Column(
+      children: [
+        // First row: Fajr, Syuruk, Dhuhr
+        Row(
+          children: prayerData.take(3).map((prayer) => 
+            Expanded(child: _buildPrayerTimeItem(prayer, isToday))
+          ).toList(),
+        ),
+        const SizedBox(height: 8),
+        // Second row: Asr, Maghrib, Isha
+        Row(
+          children: prayerData.skip(3).map((prayer) => 
+            Expanded(child: _buildPrayerTimeItem(prayer, isToday))
+          ).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPrayerTimeItem(Map<String, dynamic> prayer, bool isToday) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: isToday 
+            ? Theme.of(context).primaryColor.withOpacity(0.05)
+            : Colors.grey.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.grey.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            prayer['icon'] as IconData,
+            size: 20,
+            color: isToday 
+                ? Theme.of(context).primaryColor
+                : Colors.grey[600],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            prayer['name'] as String,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: isToday 
+                  ? Theme.of(context).primaryColor
+                  : Colors.grey[700],
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            _formatTime(prayer['time'] as String),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: isToday 
+                  ? Theme.of(context).primaryColor
+                  : Colors.black87,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -316,6 +391,24 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
     }
   }
 
+  String _getFullDay(String day) {
+    // Return full day name as is
+    return day;
+  }
+
+  String _formatFullDisplayDate(String dbDate) {
+    // Convert from "DD-MMM-YYYY" to "DD MMM YYYY"
+    try {
+      final parts = dbDate.split('-');
+      if (parts.length == 3) {
+        return '${parts[0]} ${parts[1]} ${parts[2]}';
+      }
+      return dbDate;
+    } catch (e) {
+      return dbDate;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -365,7 +458,7 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildDataRangeInfo(),
-                      _buildWeeklyTable(),
+                      _buildWeeklyTables(),
                       const SizedBox(height: 16),
                       Card(
                         elevation: 1,

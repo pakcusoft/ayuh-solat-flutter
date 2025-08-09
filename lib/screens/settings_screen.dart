@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/prayer_time_service.dart';
 import '../services/preferences_service.dart';
+import '../services/notification_service.dart';
 import 'weekly_schedule_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -13,17 +14,24 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   String _selectedZone = 'WLY01';
   bool _isLoading = true;
+  bool _notificationsEnabled = true;
+  bool _adzanEnabled = true;
   
   @override
   void initState() {
     super.initState();
-    _loadSelectedZone();
+    _loadSettings();
   }
 
-  Future<void> _loadSelectedZone() async {
+  Future<void> _loadSettings() async {
     final savedZone = await PreferencesService.getSelectedZone();
+    final notificationsEnabled = await PreferencesService.getNotificationsEnabled();
+    final adzanEnabled = await PreferencesService.getAdzanEnabled();
+    
     setState(() {
       _selectedZone = savedZone;
+      _notificationsEnabled = notificationsEnabled;
+      _adzanEnabled = adzanEnabled;
       _isLoading = false;
     });
   }
@@ -43,6 +51,222 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       );
     }
+  }
+
+  Future<void> _updateNotificationSettings(bool enabled) async {
+    await PreferencesService.saveNotificationsEnabled(enabled);
+    setState(() {
+      _notificationsEnabled = enabled;
+    });
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(enabled ? 'Notifications enabled' : 'Notifications disabled'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _updateAdzanSettings(bool enabled) async {
+    await PreferencesService.saveAdzanEnabled(enabled);
+    setState(() {
+      _adzanEnabled = enabled;
+    });
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(enabled ? 'Adzan sound enabled' : 'Adzan sound disabled'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Widget _buildNotificationSettings() {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.notifications,
+                  color: Theme.of(context).primaryColor,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Notifications',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Get reminded 10 minutes before prayer time and when it\'s time to pray.',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            // Notifications toggle
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey[300]!),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: SwitchListTile(
+                title: const Text(
+                  'Prayer Time Notifications',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+                subtitle: const Text('Receive notifications for prayer times'),
+                value: _notificationsEnabled,
+                onChanged: _updateNotificationSettings,
+                activeColor: Theme.of(context).primaryColor,
+              ),
+            ),
+            
+            const SizedBox(height: 12),
+            
+            // Adzan sound toggle
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey[300]!),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: SwitchListTile(
+                title: const Text(
+                  'Adzan Sound',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+                subtitle: const Text('Play adzan sound when prayer time arrives'),
+                value: _adzanEnabled,
+                onChanged: _updateAdzanSettings,
+                activeColor: Theme.of(context).primaryColor,
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Testing buttons
+            const Text(
+              'Testing:',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 8),
+            
+            // Test basic notification
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  await NotificationService.showTestNotification();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Test notification sent!'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.notification_add),
+                label: const Text('Test Basic Notification'),
+              ),
+            ),
+            
+            const SizedBox(height: 8),
+            
+            // Test reminder notification
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  await NotificationService.testReminderNotification();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Test reminder sent!'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.schedule),
+                label: const Text('Test Prayer Reminder'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.orange,
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 8),
+            
+            // Test prayer time + adzan
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  await NotificationService.testPrayerTimeNotification();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Test prayer time notification + adzan sent!'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.mosque),
+                label: const Text('Test Prayer Time + Adzan'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.green,
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 8),
+            
+            // Stop audio button
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  await NotificationService.stopAudio();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Audio stopped!'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.stop),
+                label: const Text('Stop Audio'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildZoneSelector() {
@@ -215,6 +439,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _buildCurrentZoneInfo(),
                   const SizedBox(height: 16),
                   _buildZoneSelector(),
+                  const SizedBox(height: 16),
+                  _buildNotificationSettings(),
                   const SizedBox(height: 24),
                   
                   // Weekly Schedule section

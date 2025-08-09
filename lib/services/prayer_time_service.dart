@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/prayer_time.dart';
 import 'database_service.dart';
 import 'widget_service.dart';
+import 'notification_service.dart';
 
 class PrayerTimeService {
   static const String _baseUrl = 'https://www.e-solat.gov.my/index.php';
@@ -114,6 +115,9 @@ class PrayerTimeService {
         // Update widget after caching new data
         WidgetService.updateWidget();
         
+        // Schedule notifications for the cached prayer times
+        await scheduleNotificationsForCachedData(response.prayerTimes);
+        
         return true;
       }
       
@@ -139,6 +143,17 @@ class PrayerTimeService {
       }
     } catch (e) {
       print('Error checking cache: $e');
+    }
+  }
+  
+  // Schedule notifications for cached prayer times
+  static Future<void> scheduleNotificationsForCachedData(List<PrayerTime> prayerTimes) async {
+    try {
+      print('Scheduling notifications for ${prayerTimes.length} prayer times');
+      await NotificationService.scheduleNotificationsForPrayerTimes(prayerTimes);
+      print('Successfully scheduled notifications');
+    } catch (e) {
+      print('Error scheduling notifications: $e');
     }
   }
   
