@@ -176,6 +176,7 @@ struct PrayerTimesWidgetEntryView : View {
         .background(Color.white)
         .cornerRadius(16)
         .shadow(color: .gray.opacity(0.2), radius: 4, x: 0, y: 2)
+        .widgetURL(URL(string: "ayuhsolat://open"))
     }
     
     private func prayerTimeRow(name: String, time: String) -> some View {
