@@ -67,7 +67,7 @@ class NotificationService {
 
   static Future<void> _initializeLocalNotifications() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/launcher_icon');
+        AndroidInitializationSettings('@mipmap/ic_launcher');
 
     const DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings(
@@ -407,9 +407,9 @@ class NotificationService {
             priority: Priority.max,
             enableVibration: true,
             playSound: true,
-            icon: '@mipmap/launcher_icon',
+            icon: '@mipmap/ic_launcher',
             largeIcon: const DrawableResourceAndroidBitmap(
-              '@mipmap/launcher_icon',
+              '@mipmap/ic_launcher',
             ),
             autoCancel: false,
             ongoing: false,
@@ -478,9 +478,9 @@ class NotificationService {
             priority: Priority.max,
             enableVibration: true,
             playSound: true,
-            icon: '@mipmap/launcher_icon',
+            icon: '@mipmap/ic_launcher',
             largeIcon: const DrawableResourceAndroidBitmap(
-              '@mipmap/launcher_icon',
+              '@mipmap/ic_launcher',
             ),
             autoCancel: false,
             ongoing: false,
@@ -542,9 +542,9 @@ class NotificationService {
           priority: priority,
           enableVibration: true,
           playSound: true,
-          icon: '@mipmap/launcher_icon',
+          icon: '@mipmap/ic_launcher',
           largeIcon: const DrawableResourceAndroidBitmap(
-            '@mipmap/launcher_icon',
+            '@mipmap/ic_launcher',
           ),
           styleInformation: BigTextStyleInformation(body, contentTitle: title),
         );
@@ -705,8 +705,8 @@ class NotificationService {
             autoCancel: false,
             showWhen: true,
             visibility: NotificationVisibility.public,
-            icon: '@mipmap/launcher_icon',
-            largeIcon: DrawableResourceAndroidBitmap('@mipmap/launcher_icon'),
+            icon: '@mipmap/ic_launcher',
+            largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
           ),
           iOS: DarwinNotificationDetails(
             presentAlert: true,
@@ -968,7 +968,7 @@ class NotificationService {
             priority: Priority.max,
             enableVibration: true,
             playSound: true,
-            icon: '@mipmap/launcher_icon',
+            icon: '@mipmap/ic_launcher',
           ),
           iOS: DarwinNotificationDetails(
             presentAlert: true,
@@ -1005,7 +1005,7 @@ class NotificationService {
             priority: Priority.max,
             enableVibration: true,
             playSound: true,
-            icon: '@mipmap/launcher_icon',
+            icon: '@mipmap/ic_launcher',
           ),
           iOS: DarwinNotificationDetails(
             presentAlert: true,
@@ -1202,8 +1202,8 @@ class NotificationService {
             autoCancel: false,
             showWhen: true,
             visibility: NotificationVisibility.public,
-            icon: '@mipmap/launcher_icon',
-            largeIcon: DrawableResourceAndroidBitmap('@mipmap/launcher_icon'),
+            icon: '@mipmap/ic_launcher',
+            largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
           ),
           iOS: DarwinNotificationDetails(
             presentAlert: true,
