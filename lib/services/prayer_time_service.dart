@@ -152,9 +152,9 @@ class PrayerTimeService {
   // Schedule notifications for cached prayer times
   static Future<void> scheduleNotificationsForCachedData(List<PrayerTime> prayerTimes) async {
     try {
-      print('Scheduling notifications for ${prayerTimes.length} prayer times');
+      print('Found ${prayerTimes.length} prayer times, setting up notification chain');
       await NotificationService.scheduleNotificationsForPrayerTimes(prayerTimes);
-      print('Successfully scheduled notifications');
+      print('Successfully set up notification chain');
     } catch (e) {
       print('Error scheduling notifications: $e');
     }
@@ -175,9 +175,9 @@ class PrayerTimeService {
       );
       
       if (cachedData.isNotEmpty) {
-        print('Scheduling notifications for ${cachedData.length} cached prayer times');
+        print('Found ${cachedData.length} cached prayer times, setting up notification chain');
         await NotificationService.scheduleNotificationsForPrayerTimes(cachedData);
-        print('Successfully scheduled notifications from cache');
+        print('Successfully set up notification chain from cache');
       } else {
         print('No cached data available for notifications');
       }

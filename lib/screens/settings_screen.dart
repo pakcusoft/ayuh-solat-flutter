@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/prayer_time_service.dart';
 import '../services/preferences_service.dart';
-import '../services/notification_service.dart';
 import 'weekly_schedule_screen.dart';
+import 'testing_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -158,160 +158,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
 
-            const SizedBox(height: 16),
-
-            // Testing buttons
-            const Text(
-              'Testing:',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-            ),
-            const SizedBox(height: 8),
-
-            // Test basic notification
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () async {
-                  await NotificationService.showTestNotification();
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Test notification sent!'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                },
-                icon: const Icon(Icons.notification_add),
-                label: const Text('Test Basic Notification'),
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            // Test reminder notification
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () async {
-                  await NotificationService.testReminderNotification();
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Test reminder sent!'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                },
-                icon: const Icon(Icons.schedule),
-                label: const Text('Test Prayer Reminder'),
-                style: OutlinedButton.styleFrom(foregroundColor: Colors.orange),
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            // Test prayer time + adzan
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () async {
-                  await NotificationService.testPrayerTimeNotification();
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Test prayer time notification + adzan sent!',
-                        ),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                },
-                icon: const Icon(Icons.mosque),
-                label: const Text('Test Prayer Time + Adzan'),
-                style: OutlinedButton.styleFrom(foregroundColor: Colors.green),
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            // Stop audio button
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () async {
-                  await NotificationService.stopAudio();
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Audio stopped!'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                },
-                icon: const Icon(Icons.stop),
-                label: const Text('Stop Audio'),
-                style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Scheduled notifications testing section
-            const Divider(),
-            const Text(
-              'Scheduled Notifications (New System):',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-            ),
-            const SizedBox(height: 8),
-
-            // Test scheduled notification for next minute
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () async {
-                  await NotificationService.scheduleTestNotificationForNextMinute();
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Test notification scheduled for next minute!'),
-                        duration: Duration(seconds: 3),
-                      ),
-                    );
-                  }
-                },
-                icon: const Icon(Icons.schedule_send),
-                label: const Text('Schedule Test for Next Minute'),
-                style: OutlinedButton.styleFrom(foregroundColor: Colors.purple),
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            // Debug scheduled notifications
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () async {
-                  await NotificationService.debugScheduledNotifications();
-                  final pending = await NotificationService.getPendingNotifications();
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Found ${pending.length} scheduled notifications. Check console for details.'),
-                        duration: const Duration(seconds: 3),
-                      ),
-                    );
-                  }
-                },
-                icon: const Icon(Icons.bug_report),
-                label: const Text('Debug Scheduled Notifications'),
-                style: OutlinedButton.styleFrom(foregroundColor: Colors.blue),
-              ),
-            ),
           ],
         ),
       ),
@@ -459,6 +305,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appBar: AppBar(
         title: const Text('Settings'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (String choice) {
+              if (choice == 'testing') {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const TestingScreen(),
+                  ),
+                );
+              }
+            },
+            itemBuilder: (BuildContext context) => [
+              const PopupMenuItem<String>(
+                value: 'testing',
+                child: Row(
+                  children: [
+                    Icon(Icons.bug_report, color: Colors.orange),
+                    SizedBox(width: 8),
+                    Text('Notification Testing'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
