@@ -189,62 +189,32 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
 
     final prayerTime = _prayerTimeResponse!.prayerTimes.first;
     final now = DateTime.now();
+    final currentTime = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
     
-    // Create main prayer times list (excluding Syuruk for current prayer detection)
+    // Use the same logic as widget service
     final prayers = [
-      {'name': 'Fajr', 'time': prayerTime.fajr, 'dateTime': _parseTimeOnly(prayerTime.fajr)},
-      {'name': 'Dhuhr', 'time': prayerTime.dhuhr, 'dateTime': _parseTimeOnly(prayerTime.dhuhr)},
-      {'name': 'Asr', 'time': prayerTime.asr, 'dateTime': _parseTimeOnly(prayerTime.asr)},
-      {'name': 'Maghrib', 'time': prayerTime.maghrib, 'dateTime': _parseTimeOnly(prayerTime.maghrib)},
-      {'name': 'Isha', 'time': prayerTime.isha, 'dateTime': _parseTimeOnly(prayerTime.isha)},
+      {'name': 'Fajr', 'time': _formatTime(prayerTime.fajr)},
+      {'name': 'Dhuhr', 'time': _formatTime(prayerTime.dhuhr)},
+      {'name': 'Asr', 'time': _formatTime(prayerTime.asr)},
+      {'name': 'Maghrib', 'time': _formatTime(prayerTime.maghrib)},
+      {'name': 'Isha', 'time': _formatTime(prayerTime.isha)},
     ];
 
-    // Parse Syuruk time for special Fajr handling
-    final syurukDateTime = _parseTimeOnly(prayerTime.syuruk);
-
-    String? currentPrayer;
-    String? nextPrayer;
+    String currentPrayer = '';
     
     // Find current active prayer (most recent prayer that has passed)
+    // This logic matches exactly with WidgetService._findCurrentPrayer
     for (int i = 0; i < prayers.length; i++) {
-      final prayerDateTime = prayers[i]['dateTime'] as DateTime?;
-      if (prayerDateTime == null) continue;
-      
-      final prayerName = prayers[i]['name'] as String;
+      final prayerTimeStr = prayers[i]['time']!;
+      final prayerName = prayers[i]['name']!;
       
       // Check if current time is after this prayer time
-      if (now.isAfter(prayerDateTime) || now.isAtSameMomentAs(prayerDateTime)) {
+      if (_compareTime(currentTime, prayerTimeStr) >= 0) {
         currentPrayer = prayerName;
         
         // Special case for Fajr: if Syuruk has passed, Fajr is no longer current
-        if (prayerName == 'Fajr' && syurukDateTime != null && 
-            (now.isAfter(syurukDateTime) || now.isAtSameMomentAs(syurukDateTime))) {
-          currentPrayer = null;
-        }
-        
-        // Set next prayer
-        if (i < prayers.length - 1) {
-          nextPrayer = prayers[i + 1]['name'] as String;
-        } else {
-          // After Isha, next prayer is Fajr (tomorrow)
-          nextPrayer = 'Fajr';
-        }
-      }
-    }
-    
-    // If no current prayer found, check for upcoming prayer (within 15 minutes)
-    if (currentPrayer == null) {
-      for (int i = 0; i < prayers.length; i++) {
-        final prayerDateTime = prayers[i]['dateTime'] as DateTime?;
-        if (prayerDateTime == null) continue;
-        
-        if (now.isBefore(prayerDateTime)) {
-          final minutesToPrayer = prayerDateTime.difference(now).inMinutes;
-          if (minutesToPrayer <= 15) {
-            // Upcoming prayer within 15 minutes
-            currentPrayer = prayers[i]['name'] as String;
-          }
-          break;
+        if (prayerName == 'Fajr' && _compareTime(currentTime, _formatTime(prayerTime.syuruk)) >= 0) {
+          currentPrayer = '';
         }
       }
     }
@@ -471,6 +441,22 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     } catch (e) {
       return time;
     }
+  }
+
+  // Compare two time strings in HH:MM format
+  int _compareTime(String time1, String time2) {
+    final parts1 = time1.split(':');
+    final parts2 = time2.split(':');
+    
+    final hour1 = int.parse(parts1[0]);
+    final minute1 = int.parse(parts1[1]);
+    final hour2 = int.parse(parts2[0]);
+    final minute2 = int.parse(parts2[1]);
+    
+    final totalMinutes1 = hour1 * 60 + minute1;
+    final totalMinutes2 = hour2 * 60 + minute2;
+    
+    return totalMinutes1.compareTo(totalMinutes2);
   }
 
   String _decodeBearing(String bearing) {
