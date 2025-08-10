@@ -188,6 +188,31 @@ class DatabaseService {
     }
   }
 
+  // Get prayer times for a date range
+  static Future<List<PrayerTime>> getPrayerTimesForDateRange(
+    String zone,
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
+    final prefs = await _preferences;
+    final List<PrayerTime> prayerTimes = [];
+    
+    // Iterate through each day in the range
+    DateTime currentDate = startDate;
+    while (currentDate.isBefore(endDate) || currentDate.isAtSameMomentAs(endDate)) {
+      final dateStr = '${currentDate.day.toString().padLeft(2, '0')}-${_getMonthName(currentDate.month)}-${currentDate.year}';
+      final prayerTime = await getPrayerTimeForDate(zone, dateStr);
+      
+      if (prayerTime != null) {
+        prayerTimes.add(prayerTime);
+      }
+      
+      currentDate = currentDate.add(const Duration(days: 1));
+    }
+    
+    return prayerTimes;
+  }
+  
   // Helper method to get month name from API format
   static String _getMonthName(int month) {
     const months = [

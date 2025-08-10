@@ -131,28 +131,35 @@ class NotificationService {
   
   static void _checkPrayerTimes() async {
     final now = DateTime.now();
-    final currentDate = DateFormat('yyyy-MM-dd').format(now);
     final currentTime = DateFormat('HH:mm').format(now);
     
-    // Find today's prayer times
-    final todayPrayerTime = _prayerTimes.firstWhere(
-      (pt) => pt.date == currentDate,
-      orElse: () => PrayerTime(
-        hijri: '',
-        date: currentDate,
-        day: '',
-        imsak: '00:00:00',
-        fajr: '00:00:00',
-        syuruk: '00:00:00',
-        dhuha: '00:00:00',
-        dhuhr: '00:00:00',
-        asr: '00:00:00',
-        maghrib: '00:00:00',
-        isha: '00:00:00',
-      ),
+    // Use the same date format as stored in database: dd-MMM-yyyy
+    final currentDate = DateFormat('dd-MMM-yyyy').format(now);
+    
+    if (kDebugMode) {
+      print('NotificationService: Checking at $currentTime on $currentDate');
+      print('NotificationService: Available prayer times: ${_prayerTimes.length}');
+      if (_prayerTimes.isNotEmpty) {
+        print('NotificationService: First prayer time date format: "${_prayerTimes.first.date}"');
+      }
+    }
+    
+    // Find today's prayer times using the correct date format
+    final todayPrayerTime = _prayerTimes.cast<PrayerTime?>().firstWhere(
+      (pt) => pt?.date == currentDate,
+      orElse: () => null,
     );
     
-    if (todayPrayerTime.date != currentDate) return;
+    if (todayPrayerTime == null) {
+      if (kDebugMode) {
+        print('NotificationService: No prayer times found for today ($currentDate)');
+      }
+      return;
+    }
+    
+    if (kDebugMode) {
+      print('NotificationService: Found prayer times for today: ${todayPrayerTime.date}');
+    }
     
     final prayers = [
       {'name': 'Fajr', 'time': todayPrayerTime.fajr},

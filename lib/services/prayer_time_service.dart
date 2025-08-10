@@ -140,6 +140,9 @@ class PrayerTimeService {
         await DatabaseService.cleanOldData();
       } else {
         print('Cache is still fresh for $zone');
+        
+        // Even if cache is fresh, we still need to schedule notifications for current cached data
+        await scheduleNotificationsForCurrentCache(zone);
       }
     } catch (e) {
       print('Error checking cache: $e');
@@ -154,6 +157,32 @@ class PrayerTimeService {
       print('Successfully scheduled notifications');
     } catch (e) {
       print('Error scheduling notifications: $e');
+    }
+  }
+  
+  // Schedule notifications for current cached data
+  static Future<void> scheduleNotificationsForCurrentCache(String zone) async {
+    try {
+      // Get cached prayer times for the current month
+      final now = DateTime.now();
+      final startDate = DateTime(now.year, now.month, 1);
+      final endDate = DateTime(now.year, now.month + 1, 0);
+      
+      final cachedData = await DatabaseService.getPrayerTimesForDateRange(
+        zone,
+        startDate,
+        endDate,
+      );
+      
+      if (cachedData.isNotEmpty) {
+        print('Scheduling notifications for ${cachedData.length} cached prayer times');
+        await NotificationService.scheduleNotificationsForPrayerTimes(cachedData);
+        print('Successfully scheduled notifications from cache');
+      } else {
+        print('No cached data available for notifications');
+      }
+    } catch (e) {
+      print('Error scheduling notifications from cache: $e');
     }
   }
   
