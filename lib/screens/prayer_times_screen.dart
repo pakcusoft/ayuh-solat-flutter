@@ -190,20 +190,22 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     final prayerTime = _prayerTimeResponse!.prayerTimes.first;
     final now = DateTime.now();
     
-    // Create prayer times list with parsed DateTime objects
+    // Create main prayer times list (excluding Syuruk for current prayer detection)
     final prayers = [
       {'name': 'Fajr', 'time': prayerTime.fajr, 'dateTime': _parseTimeOnly(prayerTime.fajr)},
-      {'name': 'Syuruk', 'time': prayerTime.syuruk, 'dateTime': _parseTimeOnly(prayerTime.syuruk)},
       {'name': 'Dhuhr', 'time': prayerTime.dhuhr, 'dateTime': _parseTimeOnly(prayerTime.dhuhr)},
       {'name': 'Asr', 'time': prayerTime.asr, 'dateTime': _parseTimeOnly(prayerTime.asr)},
       {'name': 'Maghrib', 'time': prayerTime.maghrib, 'dateTime': _parseTimeOnly(prayerTime.maghrib)},
       {'name': 'Isha', 'time': prayerTime.isha, 'dateTime': _parseTimeOnly(prayerTime.isha)},
     ];
 
+    // Parse Syuruk time for special Fajr handling
+    final syurukDateTime = _parseTimeOnly(prayerTime.syuruk);
+
     String? currentPrayer;
     String? nextPrayer;
     
-    // Find current active prayer
+    // Find current active prayer (most recent prayer that has passed)
     for (int i = 0; i < prayers.length; i++) {
       final prayerDateTime = prayers[i]['dateTime'] as DateTime?;
       if (prayerDateTime == null) continue;
@@ -213,6 +215,13 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
       // Check if current time is after this prayer time
       if (now.isAfter(prayerDateTime) || now.isAtSameMomentAs(prayerDateTime)) {
         currentPrayer = prayerName;
+        
+        // Special case for Fajr: if Syuruk has passed, Fajr is no longer current
+        if (prayerName == 'Fajr' && syurukDateTime != null && 
+            (now.isAfter(syurukDateTime) || now.isAtSameMomentAs(syurukDateTime))) {
+          currentPrayer = null;
+        }
+        
         // Set next prayer
         if (i < prayers.length - 1) {
           nextPrayer = prayers[i + 1]['name'] as String;
