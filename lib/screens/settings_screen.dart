@@ -257,6 +257,61 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
               ),
             ),
+
+            const SizedBox(height: 16),
+
+            // Scheduled notifications testing section
+            const Divider(),
+            const Text(
+              'Scheduled Notifications (New System):',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+
+            // Test scheduled notification for next minute
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  await NotificationService.scheduleTestNotificationForNextMinute();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Test notification scheduled for next minute!'),
+                        duration: Duration(seconds: 3),
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.schedule_send),
+                label: const Text('Schedule Test for Next Minute'),
+                style: OutlinedButton.styleFrom(foregroundColor: Colors.purple),
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            // Debug scheduled notifications
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  await NotificationService.debugScheduledNotifications();
+                  final pending = await NotificationService.getPendingNotifications();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Found ${pending.length} scheduled notifications. Check console for details.'),
+                        duration: const Duration(seconds: 3),
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.bug_report),
+                label: const Text('Debug Scheduled Notifications'),
+                style: OutlinedButton.styleFrom(foregroundColor: Colors.blue),
+              ),
+            ),
           ],
         ),
       ),

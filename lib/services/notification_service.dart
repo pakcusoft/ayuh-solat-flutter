@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -9,12 +8,20 @@ import 'package:timezone/data/latest.dart' as tz;
 import '../models/prayer_time.dart';
 import 'preferences_service.dart';
 
+/// NotificationService handles prayer time notifications using scheduled system notifications.
+/// 
+/// This service has been refactored to use flutter_local_notifications' zonedSchedule() method
+/// instead of Timer.periodic, making notifications work reliably even when the app is closed
+/// or running in the background. 
+/// 
+/// Key features:
+/// - Schedules exact notifications using system alarm managers
+/// - Works when app is closed/killed or in background
+/// - Uses AndroidScheduleMode.exactAllowWhileIdle for reliable delivery
+/// - Automatically plays adzan when prayer time notifications are tapped
+/// - Provides debugging methods to inspect scheduled notifications
 class NotificationService {
   static final AudioPlayer _audioPlayer = AudioPlayer();
-  static Timer? _prayerCheckTimer;
-  static List<PrayerTime> _prayerTimes = [];
-  static final Set<String> _notifiedReminders = {};
-  static final Set<String> _notifiedPrayerTimes = {};
   
   // Flutter local notifications
   static final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -22,6 +29,10 @@ class NotificationService {
   // For in-app notifications
   static final List<Map<String, dynamic>> _recentNotifications = [];
   static StreamController<Map<String, dynamic>>? _notificationController;
+  
+  // Notification ID counters
+  static int _reminderNotificationId = 1000;
+  static int _prayerNotificationId = 2000;
   
   // Getters for UI access
   static List<Map<String, dynamic>> get recentNotifications => _recentNotifications;
@@ -40,9 +51,6 @@ class NotificationService {
     
     // Request notification permissions
     await _requestNotificationPermissions();
-    
-    // Start periodic prayer time checking
-    _startPrayerTimeMonitoring();
   }
   
   static Future<void> _initializeLocalNotifications() async {
@@ -67,6 +75,11 @@ class NotificationService {
         // Handle notification tap
         if (kDebugMode) {
           print('Notification tapped: ${notificationResponse.payload}');
+        }
+        
+        // Handle prayer time notifications by playing adzan
+        if (notificationResponse.payload?.startsWith('prayer_time_') == true) {
+          await _playAdzan();
         }
       },
     );
@@ -121,155 +134,167 @@ class NotificationService {
         ?.requestNotificationsPermission();
   }
   
-  static void _startPrayerTimeMonitoring() {
-    // Check every minute for prayer times and reminders
-    _prayerCheckTimer?.cancel();
-    _prayerCheckTimer = Timer.periodic(const Duration(minutes: 1), (_) {
-      _checkPrayerTimes();
-    });
-  }
-  
-  static void _checkPrayerTimes() async {
-    final now = DateTime.now();
-    final currentTime = DateFormat('HH:mm').format(now);
+  static Future<void> _scheduleNotificationsForDate(PrayerTime prayerTime) async {
+    final isEnabled = await PreferencesService.getNotificationsEnabled();
+    if (!isEnabled) return;
     
-    // Use the same date format as stored in database: dd-MMM-yyyy
-    final currentDate = DateFormat('dd-MMM-yyyy').format(now);
-    
-    if (kDebugMode) {
-      print('NotificationService: Checking at $currentTime on $currentDate');
-      print('NotificationService: Available prayer times: ${_prayerTimes.length}');
-      if (_prayerTimes.isNotEmpty) {
-        print('NotificationService: First prayer time date format: "${_prayerTimes.first.date}"');
-      }
-    }
-    
-    // Find today's prayer times using the correct date format
-    final todayPrayerTime = _prayerTimes.cast<PrayerTime?>().firstWhere(
-      (pt) => pt?.date == currentDate,
-      orElse: () => null,
-    );
-    
-    if (todayPrayerTime == null) {
+    // Parse the date from the prayer time
+    final dateFormat = DateFormat('dd-MMM-yyyy');
+    final DateTime date;
+    try {
+      date = dateFormat.parse(prayerTime.date);
+    } catch (e) {
       if (kDebugMode) {
-        print('NotificationService: No prayer times found for today ($currentDate)');
+        print('Error parsing date: ${prayerTime.date}');
       }
       return;
     }
     
-    if (kDebugMode) {
-      print('NotificationService: Found prayer times for today: ${todayPrayerTime.date}');
+    // Skip dates in the past (except today)
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final targetDate = DateTime(date.year, date.month, date.day);
+    
+    if (targetDate.isBefore(today)) {
+      return;
     }
     
     final prayers = [
-      {'name': 'Fajr', 'time': todayPrayerTime.fajr},
-      {'name': 'Dhuhr', 'time': todayPrayerTime.dhuhr},
-      {'name': 'Asr', 'time': todayPrayerTime.asr},
-      {'name': 'Maghrib', 'time': todayPrayerTime.maghrib},
-      {'name': 'Isha', 'time': todayPrayerTime.isha},
+      {'name': 'Fajr', 'time': prayerTime.fajr},
+      {'name': 'Dhuhr', 'time': prayerTime.dhuhr},
+      {'name': 'Asr', 'time': prayerTime.asr},
+      {'name': 'Maghrib', 'time': prayerTime.maghrib},
+      {'name': 'Isha', 'time': prayerTime.isha},
     ];
     
     for (final prayer in prayers) {
       final prayerName = prayer['name'] as String;
-      final prayerTime = prayer['time'] as String;
-      final prayerTimeFormatted = _formatTimeForComparison(prayerTime);
-      final reminderTime = _subtractMinutes(prayerTimeFormatted, 10);
+      final prayerTimeStr = prayer['time'] as String;
       
-      // Check for 10-minute reminder
-      if (currentTime == reminderTime) {
-        final reminderKey = '$currentDate-$prayerName-reminder';
-        if (!_notifiedReminders.contains(reminderKey)) {
-          await _showReminderNotification(prayerName, prayerTimeFormatted);
-          _notifiedReminders.add(reminderKey);
-        }
+      // Parse prayer time
+      final DateTime? prayerDateTime = _parseDateTime(date, prayerTimeStr);
+      if (prayerDateTime == null) continue;
+      
+      // Skip past prayer times for today
+      if (targetDate.isAtSameMomentAs(today) && prayerDateTime.isBefore(now)) {
+        continue;
       }
       
-      // Check for prayer time
-      if (currentTime == prayerTimeFormatted) {
-        final prayerKey = '$currentDate-$prayerName-prayer';
-        if (!_notifiedPrayerTimes.contains(prayerKey)) {
-          await _showPrayerTimeNotification(prayerName);
-          await _playAdzan();
-          _notifiedPrayerTimes.add(prayerKey);
-        }
+      // Schedule reminder (10 minutes before)
+      final reminderDateTime = prayerDateTime.subtract(const Duration(minutes: 10));
+      if (reminderDateTime.isAfter(now)) {
+        await _scheduleReminderNotification(prayerName, prayerDateTime, reminderDateTime);
+      }
+      
+      // Schedule prayer time notification
+      if (prayerDateTime.isAfter(now)) {
+        await _schedulePrayerTimeNotification(prayerName, prayerDateTime);
       }
     }
   }
   
-  static String _formatTimeForComparison(String time) {
-    // Convert 06:15:00 to 06:15
-    if (time.length > 5) {
-      return time.substring(0, 5);
-    }
-    return time;
-  }
-  
-  static String _subtractMinutes(String time, int minutes) {
+  static DateTime? _parseDateTime(DateTime date, String timeString) {
     try {
-      final parts = time.split(':');
-      final hour = int.parse(parts[0]);
-      final minute = int.parse(parts[1]);
+      // Handle different time formats: "06:15:00" or "06:15"
+      final timeStr = timeString.length > 5 ? timeString.substring(0, 5) : timeString;
+      final timeParts = timeStr.split(':');
       
-      final dateTime = DateTime(2024, 1, 1, hour, minute);
-      final newDateTime = dateTime.subtract(Duration(minutes: minutes));
+      if (timeParts.length < 2) return null;
       
-      return DateFormat('HH:mm').format(newDateTime);
+      final hour = int.parse(timeParts[0]);
+      final minute = int.parse(timeParts[1]);
+      
+      return DateTime(date.year, date.month, date.day, hour, minute);
     } catch (e) {
-      return time;
+      if (kDebugMode) {
+        print('Error parsing time: $timeString');
+      }
+      return null;
     }
   }
   
-  static Future<void> _showReminderNotification(String prayerName, String prayerTime) async {
-    final isEnabled = await PreferencesService.getNotificationsEnabled();
-    if (!isEnabled) return;
+  static Future<void> _scheduleReminderNotification(
+    String prayerName, 
+    DateTime prayerTime, 
+    DateTime reminderTime
+  ) async {
+    final id = _reminderNotificationId++;
+    final timeStr = DateFormat('HH:mm').format(prayerTime);
+    
+    await _flutterLocalNotificationsPlugin.zonedSchedule(
+      id,
+      '$prayerName Prayer Reminder',
+      '$prayerName prayer in 10 minutes at $timeStr',
+      tz.TZDateTime.from(reminderTime, tz.local),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'prayer_reminders',
+          'Prayer Reminders',
+          channelDescription: 'Notifications for prayer reminders',
+          importance: Importance.high,
+          priority: Priority.high,
+          enableVibration: true,
+          playSound: true,
+          icon: '@mipmap/launcher_icon',
+          largeIcon: DrawableResourceAndroidBitmap('@mipmap/launcher_icon'),
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+          sound: 'default',
+        ),
+      ),
+      payload: 'reminder_${prayerName}_${DateFormat('yyyy-MM-dd').format(prayerTime)}',
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+    );
     
     if (kDebugMode) {
-      print('Prayer reminder: $prayerName prayer in 10 minutes at $prayerTime');
+      print('Scheduled reminder for $prayerName at ${DateFormat('yyyy-MM-dd HH:mm').format(reminderTime)}');
     }
-    
-    // Show system notification
-    await _showSystemNotification(
-      id: prayerName.hashCode + 1,
-      title: '$prayerName Prayer Reminder',
-      body: '$prayerName prayer in 10 minutes at $prayerTime',
-      channelId: 'prayer_reminders',
-      importance: Importance.high,
-      priority: Priority.high,
-    );
-    
-    // Show in-app notification
-    _showInAppNotification(
-      title: '$prayerName Prayer Reminder',
-      message: '$prayerName prayer in 10 minutes at $prayerTime',
-      isReminder: true,
-    );
   }
   
-  static Future<void> _showPrayerTimeNotification(String prayerName) async {
-    final isEnabled = await PreferencesService.getNotificationsEnabled();
-    if (!isEnabled) return;
+  static Future<void> _schedulePrayerTimeNotification(
+    String prayerName, 
+    DateTime prayerTime
+  ) async {
+    final id = _prayerNotificationId++;
+    
+    await _flutterLocalNotificationsPlugin.zonedSchedule(
+      id,
+      '$prayerName Prayer Time',
+      'It\'s time for $prayerName prayer',
+      tz.TZDateTime.from(prayerTime, tz.local),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'prayer_times',
+          'Prayer Times',
+          channelDescription: 'Notifications for prayer times',
+          importance: Importance.max,
+          priority: Priority.max,
+          enableVibration: true,
+          playSound: true,
+          icon: '@mipmap/launcher_icon',
+          largeIcon: DrawableResourceAndroidBitmap('@mipmap/launcher_icon'),
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+          sound: 'default',
+        ),
+      ),
+      payload: 'prayer_time_${prayerName}_${DateFormat('yyyy-MM-dd').format(prayerTime)}',
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+    );
     
     if (kDebugMode) {
-      print('Prayer time notification: It\'s time for $prayerName prayer');
+      print('Scheduled prayer time notification for $prayerName at ${DateFormat('yyyy-MM-dd HH:mm').format(prayerTime)}');
     }
-    
-    // Show system notification
-    await _showSystemNotification(
-      id: prayerName.hashCode + 2,
-      title: '$prayerName Prayer Time',
-      body: 'It\'s time for $prayerName prayer',
-      channelId: 'prayer_times',
-      importance: Importance.max,
-      priority: Priority.max,
-    );
-    
-    // Show in-app notification
-    _showInAppNotification(
-      title: '$prayerName Prayer Time',
-      message: 'It\'s time for $prayerName prayer',
-      isReminder: false,
-    );
   }
+  
   
   static Future<void> _showSystemNotification({
     required int id,
@@ -356,25 +381,102 @@ class NotificationService {
   }
   
   static Future<void> scheduleNotificationsForPrayerTimes(List<PrayerTime> prayerTimes) async {
-    // Store prayer times for monitoring
-    _prayerTimes = prayerTimes;
+    // Cancel all existing scheduled notifications
+    await cancelAllNotifications();
     
-    // Clear previous notifications tracking
-    _notifiedReminders.clear();
-    _notifiedPrayerTimes.clear();
+    // Schedule notifications for each day
+    for (final prayerTime in prayerTimes) {
+      await _scheduleNotificationsForDate(prayerTime);
+    }
     
     if (kDebugMode) {
-      print('Updated prayer times for notification monitoring: ${prayerTimes.length} days');
+      print('Scheduled notifications for ${prayerTimes.length} days of prayer times');
     }
   }
   
   static Future<void> cancelAllNotifications() async {
-    // Clear notification tracking
-    _notifiedReminders.clear();
-    _notifiedPrayerTimes.clear();
+    // Cancel all scheduled notifications
+    await _flutterLocalNotificationsPlugin.cancelAll();
+    
+    // Reset notification ID counters
+    _reminderNotificationId = 1000;
+    _prayerNotificationId = 2000;
     
     if (kDebugMode) {
-      print('Cancelled all notifications');
+      print('Cancelled all scheduled notifications');
+    }
+  }
+  
+  // Method to get pending scheduled notifications for debugging
+  static Future<List<PendingNotificationRequest>> getPendingNotifications() async {
+    return await _flutterLocalNotificationsPlugin.pendingNotificationRequests();
+  }
+  
+  // Method to show debug information about scheduled notifications
+  static Future<void> debugScheduledNotifications() async {
+    final pending = await getPendingNotifications();
+    
+    if (kDebugMode) {
+      print('=== SCHEDULED NOTIFICATIONS DEBUG ===');
+      print('Total pending notifications: ${pending.length}');
+      
+      for (final notification in pending) {
+        print('ID: ${notification.id}');
+        print('Title: ${notification.title}');
+        print('Body: ${notification.body}');
+        print('Payload: ${notification.payload}');
+        print('---');
+      }
+      
+      // Group by type
+      final reminders = pending.where((n) => n.payload?.startsWith('reminder_') == true).length;
+      final prayerTimes = pending.where((n) => n.payload?.startsWith('prayer_time_') == true).length;
+      
+      print('Reminders scheduled: $reminders');
+      print('Prayer time notifications scheduled: $prayerTimes');
+      print('=== END DEBUG ===');
+    }
+  }
+  
+  // Method to test scheduling a notification for the next minute
+  static Future<void> scheduleTestNotificationForNextMinute() async {
+    final now = DateTime.now();
+    final testTime = now.add(const Duration(minutes: 1));
+    
+    await _flutterLocalNotificationsPlugin.zonedSchedule(
+      9999,
+      'Test Scheduled Notification',
+      'This notification was scheduled for ${DateFormat('HH:mm').format(testTime)}',
+      tz.TZDateTime.from(testTime, tz.local),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'prayer_reminders',
+          'Prayer Reminders',
+          channelDescription: 'Test notification',
+          importance: Importance.high,
+          priority: Priority.high,
+          enableVibration: true,
+          playSound: true,
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+      payload: 'test_scheduled',
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+    );
+    
+    _showInAppNotification(
+      title: 'Test Scheduled',
+      message: 'Scheduled test notification for ${DateFormat('HH:mm').format(testTime)}',
+      isReminder: false,
+    );
+    
+    if (kDebugMode) {
+      print('Scheduled test notification for ${DateFormat('yyyy-MM-dd HH:mm').format(testTime)}');
     }
   }
   
@@ -479,7 +581,6 @@ class NotificationService {
   }
   
   static void dispose() {
-    _prayerCheckTimer?.cancel();
     _audioPlayer.dispose();
   }
 }
