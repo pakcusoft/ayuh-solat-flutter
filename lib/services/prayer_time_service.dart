@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/prayer_time.dart';
@@ -16,7 +17,12 @@ class PrayerTimeService {
     try {
       // Try to fetch from API first
       final uri = Uri.parse('$_baseUrl?r=esolatApi/takwimsolat&period=$period&zone=$zone');
-      final response = await http.get(uri);
+      final response = await http.get(uri).timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          throw TimeoutException("5 seconds timeout");
+        },
+      );
       
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
@@ -35,12 +41,12 @@ class PrayerTimeService {
         print('Using cached prayer times for $zone');
         return cachedData;
       }
-      
+
       print('No cached data available for $zone');
       return null;
     }
   }
-  
+
   // Fetch prayer times for a date range using POST with form data
   static Future<PrayerTimeResponse?> fetchPrayerTimesForDuration({
     required String zone,

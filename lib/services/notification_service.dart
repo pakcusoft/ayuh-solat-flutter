@@ -407,10 +407,8 @@ class NotificationService {
             priority: Priority.max,
             enableVibration: true,
             playSound: true,
-            icon: 'ic_notification',
-            largeIcon: const DrawableResourceAndroidBitmap(
-              'ic_notification',
-            ),
+            icon: 'ic_notify',
+            largeIcon: const DrawableResourceAndroidBitmap('ic_notification'),
             autoCancel: false,
             ongoing: false,
             showWhen: true,
@@ -478,10 +476,8 @@ class NotificationService {
             priority: Priority.max,
             enableVibration: true,
             playSound: true,
-            icon: 'ic_notification',
-            largeIcon: const DrawableResourceAndroidBitmap(
-              'ic_notification',
-            ),
+            icon: 'ic_notify',
+            largeIcon: const DrawableResourceAndroidBitmap('ic_notification'),
             autoCancel: false,
             ongoing: false,
             showWhen: true,
@@ -542,10 +538,8 @@ class NotificationService {
           priority: priority,
           enableVibration: true,
           playSound: true,
-          icon: 'ic_notification',
-          largeIcon: const DrawableResourceAndroidBitmap(
-            'ic_notification',
-          ),
+          icon: 'ic_notify',
+          largeIcon: const DrawableResourceAndroidBitmap('ic_notification'),
           styleInformation: BigTextStyleInformation(body, contentTitle: title),
         );
 
@@ -705,7 +699,7 @@ class NotificationService {
             autoCancel: false,
             showWhen: true,
             visibility: NotificationVisibility.public,
-            icon: 'ic_notification',
+            icon: 'ic_notify',
             largeIcon: DrawableResourceAndroidBitmap('ic_notification'),
           ),
           iOS: DarwinNotificationDetails(
@@ -968,7 +962,7 @@ class NotificationService {
             priority: Priority.max,
             enableVibration: true,
             playSound: true,
-            icon: 'ic_notification',
+            icon: 'ic_notify',
           ),
           iOS: DarwinNotificationDetails(
             presentAlert: true,
@@ -1005,7 +999,7 @@ class NotificationService {
             priority: Priority.max,
             enableVibration: true,
             playSound: true,
-            icon: 'ic_notification',
+            icon: 'ic_notify',
           ),
           iOS: DarwinNotificationDetails(
             presentAlert: true,
@@ -1202,7 +1196,7 @@ class NotificationService {
             autoCancel: false,
             showWhen: true,
             visibility: NotificationVisibility.public,
-            icon: 'ic_notification',
+            icon: 'ic_notify',
             largeIcon: DrawableResourceAndroidBitmap('ic_notification'),
           ),
           iOS: DarwinNotificationDetails(
