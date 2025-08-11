@@ -68,17 +68,17 @@ class TestingScreen extends StatelessWidget {
                     _showSnackBar(context, 'Test notification sent!');
                   },
                 ),
-                const SizedBox(height: 8),
-                _buildTestButton(
-                  context: context,
-                  label: '🚨 Test IMMEDIATE Notification',
-                  icon: Icons.priority_high,
-                  color: Colors.red,
-                  onPressed: () async {
-                    await NotificationService.showImmediateTestNotification();
-                    _showSnackBar(context, '🚨 HIGH PRIORITY immediate test sent!');
-                  },
-                ),
+                // const SizedBox(height: 8),
+                // _buildTestButton(
+                //   context: context,
+                //   label: '🚨 Test IMMEDIATE Notification',
+                //   icon: Icons.priority_high,
+                //   color: Colors.red,
+                //   onPressed: () async {
+                //     await NotificationService.showImmediateTestNotification();
+                //     _showSnackBar(context, '🚨 HIGH PRIORITY immediate test sent!');
+                //   },
+                // ),
                 const SizedBox(height: 8),
                 _buildTestButton(
                   context: context,
@@ -98,7 +98,10 @@ class TestingScreen extends StatelessWidget {
                   color: Colors.green,
                   onPressed: () async {
                     await NotificationService.testPrayerTimeNotification();
-                    _showSnackBar(context, 'Test prayer time notification + adzan sent!');
+                    _showSnackBar(
+                      context,
+                      'Test prayer time notification + adzan sent!',
+                    );
                   },
                 ),
                 const SizedBox(height: 8),
@@ -131,41 +134,41 @@ class TestingScreen extends StatelessWidget {
                     color: Colors.grey,
                   ),
                 ),
-                const SizedBox(height: 8),
-                _buildTestButton(
-                  context: context,
-                  label: 'Test 5-Second Schedule',
-                  icon: Icons.timer_3,
-                  color: Colors.purple,
-                  onPressed: () async {
-                    await NotificationService.scheduleTestNotificationFor5Seconds();
-                    _showSnackBar(
-                      context,
-                      'Test notification scheduled for 5 seconds! Wait and see...',
-                      duration: 3,
-                    );
-                  },
-                ),
-                const SizedBox(height: 8),
-                _buildTestButton(
-                  context: context,
-                  label: 'Test 30-Second Schedule',
-                  icon: Icons.timer,
-                  color: Colors.deepOrange,
-                  onPressed: () async {
-                    await NotificationService.scheduleTestNotificationFor30Seconds();
-                    _showSnackBar(
-                      context,
-                      'Test notification scheduled for 30 seconds! You can close the app.',
-                      duration: 4,
-                    );
-                  },
-                ),
+                // const SizedBox(height: 8),
+                // _buildTestButton(
+                //   context: context,
+                //   label: 'Test 5-Second Schedule',
+                //   icon: Icons.timer_3,
+                //   color: Colors.purple,
+                //   onPressed: () async {
+                //     await NotificationService.scheduleTestNotificationFor5Seconds();
+                //     _showSnackBar(
+                //       context,
+                //       'Test notification scheduled for 5 seconds! Wait and see...',
+                //       duration: 3,
+                //     );
+                //   },
+                // ),
+                // const SizedBox(height: 8),
+                // _buildTestButton(
+                //   context: context,
+                //   label: 'Test 30-Second Schedule',
+                //   icon: Icons.timer,
+                //   color: Colors.deepOrange,
+                //   onPressed: () async {
+                //     await NotificationService.scheduleTestNotificationFor30Seconds();
+                //     _showSnackBar(
+                //       context,
+                //       'Test notification scheduled for 30 seconds! You can close the app.',
+                //       duration: 4,
+                //     );
+                //   },
+                // ),
                 const SizedBox(height: 8),
                 _buildTestButton(
                   context: context,
                   label: 'Test 1-Minute Schedule',
-                  icon: Icons.timer_10,
+                  icon: Icons.timer,
                   color: Colors.indigo,
                   onPressed: () async {
                     await NotificationService.scheduleTestNotificationForNextMinute();
@@ -265,10 +268,7 @@ class TestingScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const Icon(
-                          Icons.warning_amber,
-                          color: Colors.orange,
-                        ),
+                        const Icon(Icons.warning_amber, color: Colors.orange),
                         const SizedBox(width: 8),
                         const Text(
                           'Testing Tips',
@@ -312,10 +312,7 @@ class TestingScreen extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(
-                  icon,
-                  color: Theme.of(context).primaryColor,
-                ),
+                Icon(icon, color: Theme.of(context).primaryColor),
                 const SizedBox(width: 8),
                 Text(
                   title,
@@ -355,11 +352,7 @@ class TestingScreen extends StatelessWidget {
     );
   }
 
-  void _showSnackBar(
-    BuildContext context,
-    String message, {
-    int duration = 2,
-  }) {
+  void _showSnackBar(BuildContext context, String message, {int duration = 2}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),

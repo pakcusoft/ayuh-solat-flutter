@@ -1,82 +1,29 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
+# Flutter Wrapper
+-keep class io.flutter.plugin.**  { *; }
+-keep class io.flutter.util.**  { *; }
+-keep class io.flutter.view.**  { *; }
+-keep class io.flutter.plugins.**  { *; }
 
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# FIX for: ERROR: R8: Library class android.content.res.XmlResourceParser implements program class org.xmlpull.v1.XmlPullParser
+-dontwarn org.xmlpull.v1.**
+-dontwarn org.kxml2.io.**
+-dontwarn android.content.res.**
+-dontwarn org.slf4j.impl.StaticLoggerBinder
+-keep class org.xmlpull.** { *; }
+-keepclassmembers class org.xmlpull.** { *; }
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Retain generic signatures of TypeToken and its subclasses with R8 version 3.0 and higher.
+# FIX for Notifications Plugin #2547: "RuntimeException: Missing type parameter."
+-keep,allowobfuscation,allowshrinking class com.google.gson.reflect.TypeToken
+-keep,allowobfuscation,allowshrinking class * extends com.google.gson.reflect.TypeToken
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# -keep class io.flutter.app.** { *; }
+# -keep class io.flutter.**  { *; }
+# --- /end fix
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
-
-# Keep flutter_local_notifications classes
--keep class com.dexterous.** { *; }
--keep class androidx.** { *; }
--keep class android.** { *; }
-
-# Keep notification-related classes
--keepnames class androidx.work.** { *; }
--keep class androidx.work.impl.** { *; }
-
-# Keep classes used by flutter_local_notifications
--keep class com.dexterous.flutterlocalnotifications.** { *; }
-
-# Keep native methods
--keepclasseswithmembers class * {
-    native <methods>;
-}
-
-# Keep classes with special names
--keepnames class com.dexterous.flutterlocalnotifications.**
--keepnames class androidx.work.**
-
-# Keep enums
--keepclassmembers enum * {
-    public static **[] values();
-    public static ** valueOf(java.lang.String);
-}
-
-# Keep Serializable classes
--keepnames class * implements java.io.Serializable
--keepclassmembers class * implements java.io.Serializable {
-    static final long serialVersionUID;
-    private static final java.io.ObjectStreamField[] serialPersistentFields;
-    private void writeObject(java.io.ObjectOutputStream);
-    private void readObject(java.io.ObjectInputStream);
-    java.lang.Object writeReplace();
-    java.lang.Object readResolve();
-}
-
-# Keep notification channels and related classes
--keep class * extends android.app.NotificationChannel
--keep class * extends androidx.core.app.NotificationCompat$Builder
-
-# Preserve annotations
--keepattributes *Annotation*
-
-# Keep Flutter plugin registrant
--keep class io.flutter.plugin.** { *; }
--keep class io.flutter.plugins.** { *; }
-
-# Keep reflection usage
--keepattributes Signature
--keepattributes InnerClasses
--keepattributes EnclosingMethod
-
-# Keep generic types
--keepattributes Signature
-
-# Additional rules for notification scheduling
--dontwarn com.dexterous.**
--dontwarn androidx.**
+# ---- Specific plugins:
+# Firebase for notifications
+-keep class com.google.firebase.** { *; }
+# Device Calendar fix 
+# see https://github.com/builttoroam/device_calendar/issues/99
+-keep class com.builttoroam.devicecalendar.** { *; }
