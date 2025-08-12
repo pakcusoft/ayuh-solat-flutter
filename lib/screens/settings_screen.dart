@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../services/prayer_time_service.dart';
 import '../services/preferences_service.dart';
+import '../services/notification_service.dart';
 import 'weekly_schedule_screen.dart';
 import 'testing_screen.dart';
 
@@ -16,11 +19,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isLoading = true;
   bool _notificationsEnabled = true;
   bool _adzanEnabled = true;
+  List<PendingNotificationRequest> _pendingNotifications = [];
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     _loadSettings();
+    _updatePendingNotifications();
+    _startRefreshTimer();
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startRefreshTimer() {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (mounted) {
+        _updatePendingNotifications();
+      }
+    });
+  }
+
+  Future<void> _updatePendingNotifications() async {
+    try {
+      final pendingNotifications = await NotificationService.getPendingNotifications();
+      if (mounted) {
+        setState(() {
+          _pendingNotifications = pendingNotifications;
+        });
+      }
+    } catch (e) {
+      print('Error fetching pending notifications: $e');
+    }
   }
 
   Future<void> _loadSettings() async {
@@ -299,6 +333,161 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  IconData _getNotificationIcon(String? payload) {
+    if (payload == null) return Icons.notifications;
+    
+    if (payload.contains('reminder')) {
+      return Icons.timer;
+    } else if (payload.contains('prayer_time')) {
+      return Icons.mosque;
+    } else if (payload.contains('test')) {
+      return Icons.science;
+    } else if (payload.contains('chain')) {
+      return Icons.link;
+    }
+    
+    return Icons.notification_important;
+  }
+
+  Widget _buildPendingNotifications() {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.schedule,
+                  color: Theme.of(context).primaryColor,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Pending Reminders (${_pendingNotifications.length})',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.refresh, size: 20),
+                  onPressed: _updatePendingNotifications,
+                  tooltip: 'Refresh',
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _pendingNotifications.isEmpty
+                  ? 'No pending notifications scheduled'
+                  : 'Scheduled notifications that will trigger automatically',
+              style: const TextStyle(color: Colors.grey, fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            
+            if (_pendingNotifications.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: const Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.notifications_off, size: 48, color: Colors.grey),
+                      SizedBox(height: 8),
+                      Text(
+                        'No notifications scheduled',
+                        style: TextStyle(color: Colors.grey, fontSize: 16),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              ..._pendingNotifications.map((notification) {
+                String displayTitle = notification.title ?? 'Unknown';
+                String displayBody = notification.body ?? '';
+                
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.blue.withOpacity(0.05),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            _getNotificationIcon(notification.payload),
+                            size: 16,
+                            color: Colors.blue[700],
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              displayTitle,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.blue[700],
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Text(
+                            'ID: ${notification.id}',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.blue[500],
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (displayBody.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            displayBody,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.blue[600],
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      if (notification.payload != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            'Type: ${notification.payload}',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.blue[400],
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              }).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -343,6 +532,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _buildZoneSelector(),
                   const SizedBox(height: 16),
                   _buildNotificationSettings(),
+                  const SizedBox(height: 16),
+                  _buildPendingNotifications(),
                   const SizedBox(height: 24),
 
                   // Weekly Schedule section

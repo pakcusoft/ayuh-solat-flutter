@@ -93,28 +93,28 @@ class TestingScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 _buildTestButton(
                   context: context,
-                  label: 'Test Prayer Time + Adzan',
+                  label: 'Test Prayer Time',
                   icon: Icons.mosque,
                   color: Colors.green,
                   onPressed: () async {
                     await NotificationService.testPrayerTimeNotification();
                     _showSnackBar(
                       context,
-                      'Test prayer time notification + adzan sent!',
+                      'Test prayer time notification!',
                     );
                   },
                 ),
-                const SizedBox(height: 8),
-                _buildTestButton(
-                  context: context,
-                  label: 'Stop Audio',
-                  icon: Icons.stop,
-                  color: Colors.red,
-                  onPressed: () async {
-                    await NotificationService.stopAudio();
-                    _showSnackBar(context, 'Audio stopped!');
-                  },
-                ),
+                // const SizedBox(height: 8),
+                // _buildTestButton(
+                //   context: context,
+                //   label: 'Stop Audio',
+                //   icon: Icons.stop,
+                //   color: Colors.red,
+                //   onPressed: () async {
+                //     await NotificationService.stopAudio();
+                //     _showSnackBar(context, 'Audio stopped!');
+                //   },
+                // ),
               ],
             ),
 

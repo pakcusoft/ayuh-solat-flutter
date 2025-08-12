@@ -8,6 +8,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import '../models/prayer_time.dart';
 import 'preferences_service.dart';
+import 'database_service.dart';
 
 /// NotificationService handles prayer time notifications using scheduled system notifications.
 ///
@@ -175,6 +176,7 @@ class NotificationService {
           importance: Importance.max,
           enableVibration: true,
           playSound: true,
+          sound: RawResourceAndroidNotificationSound('adzan'),
         );
 
     // Channel for test notifications
@@ -253,7 +255,7 @@ class NotificationService {
       return;
     }
 
-    final nextNotification = _findNextNotification();
+    final nextNotification = await _findNextNotification();
     if (nextNotification == null) {
       if (kDebugMode) {
         print('No more notifications to schedule');
@@ -295,63 +297,94 @@ class NotificationService {
   }
 
   // Find the next notification that should be scheduled
-  static Map<String, dynamic>? _findNextNotification() {
+  static Future<Map<String, dynamic>?> _findNextNotification() async {
     final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+    
+    // Get current selected zone
+    final zone = await PreferencesService.getSelectedZone();
+    
+    // Try today first
+    final todayNotification = await _findNextNotificationForDate(zone, today, now);
+    if (todayNotification != null) {
+      return todayNotification;
+    }
+    
+    // If no notification for today (i.e., after Isha), try tomorrow
+    final tomorrowNotification = await _findNextNotificationForDate(zone, tomorrow, now);
+    return tomorrowNotification;
+  }
+
+  // Helper method to find next notification for a specific date
+  static Future<Map<String, dynamic>?> _findNextNotificationForDate(
+    String zone, 
+    DateTime targetDate, 
+    DateTime currentTime,
+  ) async {
+    // Format date for database query
     final dateFormat = DateFormat('dd-MMM-yyyy');
+    final dateStr = dateFormat.format(targetDate);
+    
+    // Get prayer time from database
+    final prayerTime = await DatabaseService.getPrayerTimeForDate(zone, dateStr);
+    if (prayerTime == null) {
+      if (kDebugMode) {
+        print('No prayer time found for $dateStr in zone $zone');
+      }
+      return null;
+    }
+    
+    final prayers = [
+      {'name': 'Fajr', 'time': prayerTime.fajr},
+      {'name': 'Dhuhr', 'time': prayerTime.dhuhr},
+      {'name': 'Asr', 'time': prayerTime.asr},
+      {'name': 'Maghrib', 'time': prayerTime.maghrib},
+      {'name': 'Isha', 'time': prayerTime.isha},
+    ];
 
     Map<String, dynamic>? nextNotification;
     DateTime? nextDateTime;
 
-    for (final prayerTime in _cachedPrayerTimes) {
-      DateTime date;
-      try {
-        date = dateFormat.parse(prayerTime.date);
-      } catch (e) {
-        continue;
+    for (final prayer in prayers) {
+      final prayerName = prayer['name'] as String;
+      final prayerTimeStr = prayer['time'] as String;
+
+      final DateTime? prayerDateTime = _parseDateTime(targetDate, prayerTimeStr);
+      if (prayerDateTime == null || prayerDateTime.isBefore(currentTime)) continue;
+
+      // Check reminder time (10 minutes before) first
+      final reminderDateTime = prayerDateTime.subtract(
+        const Duration(minutes: 10),
+      );
+      
+      // If reminder time is still in the future, that's our next notification
+      if (reminderDateTime.isAfter(currentTime)) {
+        nextDateTime = reminderDateTime;
+        nextNotification = {
+          'type': 'reminder',
+          'prayer': prayerName,
+          'dateTime': reminderDateTime,
+          'prayerTime': prayerDateTime,
+        };
+        break; // Found the next notification, no need to check further
       }
-
-      final prayers = [
-        {'name': 'Fajr', 'time': prayerTime.fajr},
-        {'name': 'Dhuhr', 'time': prayerTime.dhuhr},
-        {'name': 'Asr', 'time': prayerTime.asr},
-        {'name': 'Maghrib', 'time': prayerTime.maghrib},
-        {'name': 'Isha', 'time': prayerTime.isha},
-      ];
-
-      for (final prayer in prayers) {
-        final prayerName = prayer['name'] as String;
-        final prayerTimeStr = prayer['time'] as String;
-
-        final DateTime? prayerDateTime = _parseDateTime(date, prayerTimeStr);
-        if (prayerDateTime == null || prayerDateTime.isBefore(now)) continue;
-
-        // Check reminder time (10 minutes before)
-        final reminderDateTime = prayerDateTime.subtract(
-          const Duration(minutes: 10),
-        );
-        if (reminderDateTime.isAfter(now)) {
-          if (nextDateTime == null || reminderDateTime.isBefore(nextDateTime)) {
-            nextDateTime = reminderDateTime;
-            nextNotification = {
-              'type': 'reminder',
-              'prayer': prayerName,
-              'dateTime': reminderDateTime,
-              'prayerTime': prayerDateTime,
-            };
-          }
-        }
-
-        // Check prayer time
-        if (nextDateTime == null || prayerDateTime.isBefore(nextDateTime)) {
-          nextDateTime = prayerDateTime;
-          nextNotification = {
-            'type': 'prayer_time',
-            'prayer': prayerName,
-            'dateTime': prayerDateTime,
-            'prayerTime': prayerDateTime,
-          };
-        }
+      
+      // If reminder time has passed but prayer time hasn't, schedule prayer time
+      if (prayerDateTime.isAfter(currentTime)) {
+        nextDateTime = prayerDateTime;
+        nextNotification = {
+          'type': 'prayer_time',
+          'prayer': prayerName,
+          'dateTime': prayerDateTime,
+          'prayerTime': prayerDateTime,
+        };
+        break; // Found the next notification, no need to check further
       }
+    }
+
+    if (kDebugMode && nextNotification != null) {
+      print('Found next notification for $dateStr: ${nextNotification!['type']} for ${nextNotification!['prayer']} at ${nextNotification!['dateTime']}');
     }
 
     return nextNotification;
@@ -619,7 +652,7 @@ class NotificationService {
 
     if (kDebugMode) {
       print(
-        'Initialized chain scheduling for ${prayerTimes.length} days of prayer times',
+        'Initialized chain scheduling',
       );
     }
   }
@@ -1262,7 +1295,7 @@ class NotificationService {
       message: 'Test: It\'s time for Dhuhr prayer',
       isReminder: false,
     );
-    await testAdzanPlayback();
+    // await testAdzanPlayback();
   }
 
   static Future<void> testAdzanPlayback() async {
