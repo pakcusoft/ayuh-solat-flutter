@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import '../models/prayer_time.dart';
 import 'database_service.dart';
 import 'widget_service.dart';
@@ -155,37 +156,54 @@ class PrayerTimeService {
     }
   }
   
-  // Schedule notifications for cached prayer times
+  // Schedule notifications for cached prayer times (limited to next 3 days)
   static Future<void> scheduleNotificationsForCachedData(List<PrayerTime> prayerTimes) async {
     try {
-      print('Found ${prayerTimes.length} prayer times, setting up notification chain');
-      await NotificationService.scheduleNotificationsForPrayerTimes(prayerTimes);
-      print('Successfully set up notification chain');
+      // Filter prayer times to only include the next 3 days
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final threeDaysFromNow = today.add(const Duration(days: 3));
+      final dateFormat = DateFormat('dd-MMM-yyyy');
+      
+      final filteredPrayerTimes = prayerTimes.where((prayerTime) {
+        try {
+          final prayerDate = dateFormat.parse(prayerTime.date);
+          return prayerDate.isAtSameMomentAs(today) || 
+                 (prayerDate.isAfter(today) && prayerDate.isBefore(threeDaysFromNow.add(const Duration(days: 1))));
+        } catch (e) {
+          print('Error parsing prayer time date ${prayerTime.date}: $e');
+          return false;
+        }
+      }).toList();
+      
+      print('Found ${prayerTimes.length} total prayer times, filtered to ${filteredPrayerTimes.length} for next 3 days, setting up bulk notifications');
+      await NotificationService.scheduleBulkNotificationsForPrayerTimes(filteredPrayerTimes);
+      print('Successfully set up bulk notifications (3 days scope)');
     } catch (e) {
       print('Error scheduling notifications: $e');
     }
   }
   
-  // Schedule notifications for current cached data
+  // Schedule notifications for current cached data (limited to next 3 days)
   static Future<void> scheduleNotificationsForCurrentCache(String zone) async {
     try {
-      // Get cached prayer times for the current month
+      // Get cached prayer times for only the next 3 days instead of entire month
       final now = DateTime.now();
-      final startDate = DateTime(now.year, now.month, 1);
-      final endDate = DateTime(now.year, now.month + 1, 0);
+      final today = DateTime(now.year, now.month, now.day);
+      final threeDaysFromNow = today.add(const Duration(days: 3));
       
       final cachedData = await DatabaseService.getPrayerTimesForDateRange(
         zone,
-        startDate,
-        endDate,
+        today,
+        threeDaysFromNow,
       );
       
       if (cachedData.isNotEmpty) {
-        print('Found ${cachedData.length} cached prayer times, setting up notification chain');
-        await NotificationService.scheduleNotificationsForPrayerTimes(cachedData);
-        print('Successfully set up notification chain from cache');
+        print('Found ${cachedData.length} cached prayer times for next 3 days, setting up bulk notifications');
+        await NotificationService.scheduleBulkNotificationsForPrayerTimes(cachedData);
+        print('Successfully set up bulk notifications from cache (3 days scope)');
       } else {
-        print('No cached data available for notifications');
+        print('No cached data available for notifications (3 days scope)');
       }
     } catch (e) {
       print('Error scheduling notifications from cache: $e');

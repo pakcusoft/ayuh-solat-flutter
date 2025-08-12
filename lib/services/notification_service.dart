@@ -93,60 +93,29 @@ class NotificationService {
     await _createNotificationChannels();
   }
 
-  /// Unified notification response handler for both foreground and background notifications
+  /// Simplified notification response handler for adzan playback only
   @pragma('vm:entry-point')
   static Future<void> _onNotificationResponse(
     NotificationResponse notificationResponse,
   ) async {
     try {
       if (kDebugMode) {
-        print('📱 Notification response received:');
-        print('   Payload: ${notificationResponse.payload}');
-        print('   Action ID: ${notificationResponse.actionId}');
-        print('   Input: ${notificationResponse.input}');
-        print(
-          '   Notification response type: ${notificationResponse.notificationResponseType}',
-        );
+        print('📱 Notification tapped: ${notificationResponse.payload}');
       }
 
       final payload = notificationResponse.payload;
-      if (payload == null) {
-        if (kDebugMode) {
-          print('⚠️ Notification payload is null');
-        }
-        return;
-      }
+      if (payload == null) return;
 
       // Handle prayer time notifications by playing adzan
-      if (payload.startsWith('prayer_time_') ||
-          payload.startsWith('chain_prayer_time_')) {
+      if (payload.startsWith('prayer_time_')) {
         if (kDebugMode) {
           print('🕌 Playing adzan for prayer time notification');
         }
-        await _playAdzan();
+        // await _playAdzan();
       }
 
-      // Handle chained notifications - schedule the next one
-      if (payload.startsWith('chain_')) {
-        if (payload.startsWith('chain_test_')) {
-          // Handle test chain
-          if (kDebugMode) {
-            print('🔗 Handling test chain notification');
-          }
-          await _scheduleNextTestNotification();
-        } else if (payload.startsWith('chain_reminder_') ||
-            payload.startsWith('chain_prayer_time_')) {
-          // Handle normal prayer time chain
-          if (kDebugMode) {
-            print('🔗 Handling prayer chain notification');
-          }
-          await _scheduleNextNotification();
-        }
-      }
-
-      // Log successful handling
       if (kDebugMode) {
-        print('✅ Notification response handled successfully');
+        print('✅ Notification response handled');
       }
     } catch (e) {
       if (kDebugMode) {
@@ -245,150 +214,7 @@ class NotificationService {
     }
   }
 
-  // Find and schedule the next upcoming notification
-  static Future<void> _scheduleNextNotification() async {
-    final isEnabled = await PreferencesService.getNotificationsEnabled();
-    if (!isEnabled) {
-      if (kDebugMode) {
-        print('Notifications disabled, skipping scheduling');
-      }
-      return;
-    }
 
-    final nextNotification = await _findNextNotification();
-    if (nextNotification == null) {
-      if (kDebugMode) {
-        print('No more notifications to schedule');
-      }
-      return;
-    }
-
-    final notifType = nextNotification['type'] as String;
-    final prayerName = nextNotification['prayer'] as String;
-    final dateTime = nextNotification['dateTime'] as DateTime;
-    final prayerTime = nextNotification['prayerTime'] as DateTime;
-
-    if (notifType == 'reminder') {
-      await _scheduleReminderNotification(
-        prayerName,
-        prayerTime,
-        dateTime,
-        isChained: true,
-      );
-    } else {
-      await _schedulePrayerTimeNotification(
-        prayerName,
-        dateTime,
-        isChained: true,
-      );
-    }
-
-    if (kDebugMode) {
-      final malaysiaTz = tz.getLocation('Asia/Kuala_Lumpur');
-      final malaysiaTime = tz.TZDateTime.from(dateTime, malaysiaTz);
-      print('🔗 Scheduled next notification: $notifType for $prayerName');
-      print(
-        '   Local time: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(dateTime)}',
-      );
-      print(
-        '   Malaysia time: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(malaysiaTime)}',
-      );
-    }
-  }
-
-  // Find the next notification that should be scheduled
-  static Future<Map<String, dynamic>?> _findNextNotification() async {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final tomorrow = today.add(const Duration(days: 1));
-    
-    // Get current selected zone
-    final zone = await PreferencesService.getSelectedZone();
-    
-    // Try today first
-    final todayNotification = await _findNextNotificationForDate(zone, today, now);
-    if (todayNotification != null) {
-      return todayNotification;
-    }
-    
-    // If no notification for today (i.e., after Isha), try tomorrow
-    final tomorrowNotification = await _findNextNotificationForDate(zone, tomorrow, now);
-    return tomorrowNotification;
-  }
-
-  // Helper method to find next notification for a specific date
-  static Future<Map<String, dynamic>?> _findNextNotificationForDate(
-    String zone, 
-    DateTime targetDate, 
-    DateTime currentTime,
-  ) async {
-    // Format date for database query
-    final dateFormat = DateFormat('dd-MMM-yyyy');
-    final dateStr = dateFormat.format(targetDate);
-    
-    // Get prayer time from database
-    final prayerTime = await DatabaseService.getPrayerTimeForDate(zone, dateStr);
-    if (prayerTime == null) {
-      if (kDebugMode) {
-        print('No prayer time found for $dateStr in zone $zone');
-      }
-      return null;
-    }
-    
-    final prayers = [
-      {'name': 'Fajr', 'time': prayerTime.fajr},
-      {'name': 'Dhuhr', 'time': prayerTime.dhuhr},
-      {'name': 'Asr', 'time': prayerTime.asr},
-      {'name': 'Maghrib', 'time': prayerTime.maghrib},
-      {'name': 'Isha', 'time': prayerTime.isha},
-    ];
-
-    Map<String, dynamic>? nextNotification;
-    DateTime? nextDateTime;
-
-    for (final prayer in prayers) {
-      final prayerName = prayer['name'] as String;
-      final prayerTimeStr = prayer['time'] as String;
-
-      final DateTime? prayerDateTime = _parseDateTime(targetDate, prayerTimeStr);
-      if (prayerDateTime == null || prayerDateTime.isBefore(currentTime)) continue;
-
-      // Check reminder time (10 minutes before) first
-      final reminderDateTime = prayerDateTime.subtract(
-        const Duration(minutes: 10),
-      );
-      
-      // If reminder time is still in the future, that's our next notification
-      if (reminderDateTime.isAfter(currentTime)) {
-        nextDateTime = reminderDateTime;
-        nextNotification = {
-          'type': 'reminder',
-          'prayer': prayerName,
-          'dateTime': reminderDateTime,
-          'prayerTime': prayerDateTime,
-        };
-        break; // Found the next notification, no need to check further
-      }
-      
-      // If reminder time has passed but prayer time hasn't, schedule prayer time
-      if (prayerDateTime.isAfter(currentTime)) {
-        nextDateTime = prayerDateTime;
-        nextNotification = {
-          'type': 'prayer_time',
-          'prayer': prayerName,
-          'dateTime': prayerDateTime,
-          'prayerTime': prayerDateTime,
-        };
-        break; // Found the next notification, no need to check further
-      }
-    }
-
-    if (kDebugMode && nextNotification != null) {
-      print('Found next notification for $dateStr: ${nextNotification!['type']} for ${nextNotification!['prayer']} at ${nextNotification!['dateTime']}');
-    }
-
-    return nextNotification;
-  }
 
   static DateTime? _parseDateTime(DateTime date, String timeString) {
     try {
@@ -457,9 +283,7 @@ class NotificationService {
             sound: 'default',
           ),
         ),
-        payload: isChained
-            ? 'chain_reminder_${prayerName}_${DateFormat('yyyy-MM-dd').format(prayerTime)}'
-            : 'reminder_${prayerName}_${DateFormat('yyyy-MM-dd').format(prayerTime)}',
+        payload: 'reminder_${prayerName}_${DateFormat('yyyy-MM-dd').format(prayerTime)}',
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
@@ -526,9 +350,7 @@ class NotificationService {
             sound: 'default',
           ),
         ),
-        payload: isChained
-            ? 'chain_prayer_time_${prayerName}_${DateFormat('yyyy-MM-dd').format(prayerTime)}'
-            : 'prayer_time_${prayerName}_${DateFormat('yyyy-MM-dd').format(prayerTime)}',
+        payload: 'prayer_time_${prayerName}_${DateFormat('yyyy-MM-dd').format(prayerTime)}',
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
@@ -635,26 +457,167 @@ class NotificationService {
     }
   }
 
-  // Store prayer times for chain scheduling
-  static List<PrayerTime> _cachedPrayerTimes = [];
 
-  static Future<void> scheduleNotificationsForPrayerTimes(
+  /// Schedules all prayer notifications in bulk (better approach than chaining)
+  /// This schedules reminders and prayer time notifications for all upcoming prayers
+  static Future<void> scheduleBulkNotificationsForPrayerTimes(
     List<PrayerTime> prayerTimes,
   ) async {
     // Cancel all existing scheduled notifications
     await cancelAllNotifications();
 
-    // Store prayer times for chain scheduling
-    _cachedPrayerTimes = prayerTimes;
+    final now = DateTime.now();
+    int notificationIdCounter = 3000; // Start from 3000 to avoid conflicts
+    int scheduledCount = 0;
 
-    // Schedule only the next notification
-    await _scheduleNextNotification();
+    final malaysiaTz = tz.getLocation('Asia/Kuala_Lumpur');
+
+    for (final prayerTime in prayerTimes) {
+      // Parse the date string from the PrayerTime model (format: "dd-MMM-yyyy")
+      final dateFormat = DateFormat('dd-MMM-yyyy');
+      DateTime prayerDate;
+      try {
+        prayerDate = dateFormat.parse(prayerTime.date);
+      } catch (e) {
+        if (kDebugMode) {
+          print('❌ Error parsing date ${prayerTime.date}: $e');
+        }
+        continue; // Skip this prayer time if date parsing fails
+      }
+
+      final prayers = [
+        {'name': 'Fajr', 'time': prayerTime.fajr},
+        {'name': 'Dhuhr', 'time': prayerTime.dhuhr},
+        {'name': 'Asr', 'time': prayerTime.asr},
+        {'name': 'Maghrib', 'time': prayerTime.maghrib},
+        {'name': 'Isha', 'time': prayerTime.isha},
+      ];
+
+      for (final prayer in prayers) {
+        final prayerName = prayer['name'] as String;
+        final prayerTimeStr = prayer['time'] as String;
+
+        final DateTime? prayerDateTime = _parseDateTime(prayerDate, prayerTimeStr);
+        if (prayerDateTime == null || prayerDateTime.isBefore(now)) continue;
+
+        // Schedule reminder notification (10 minutes before)
+        final reminderDateTime = prayerDateTime.subtract(const Duration(minutes: 10));
+        if (reminderDateTime.isAfter(now)) {
+          try {
+            final timeStr = DateFormat('HH:mm').format(prayerDateTime);
+            final scheduledDate = tz.TZDateTime.from(reminderDateTime, malaysiaTz);
+
+            await _flutterLocalNotificationsPlugin.zonedSchedule(
+              notificationIdCounter++,
+              '$prayerName Prayer Reminder',
+              '$prayerName prayer in 10 minutes at $timeStr',
+              scheduledDate,
+              NotificationDetails(
+                android: AndroidNotificationDetails(
+                  'prayer_reminders',
+                  'Prayer Reminders',
+                  channelDescription: 'Notifications for prayer reminders',
+                  importance: Importance.max,
+                  priority: Priority.max,
+                  enableVibration: true,
+                  playSound: true,
+                  icon: 'ic_notification',
+                  largeIcon: const DrawableResourceAndroidBitmap('ic_notification'),
+                  autoCancel: false,
+                  ongoing: false,
+                  showWhen: true,
+                  when: reminderDateTime.millisecondsSinceEpoch,
+                  category: AndroidNotificationCategory.alarm,
+                  visibility: NotificationVisibility.public,
+                  fullScreenIntent: true,
+                ),
+                iOS: const DarwinNotificationDetails(
+                  presentAlert: true,
+                  presentBadge: true,
+                  presentSound: true,
+                  sound: 'default',
+                ),
+              ),
+              payload: 'bulk_reminder_${prayerName}_${DateFormat('yyyy-MM-dd').format(prayerDateTime)}',
+              androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+              uiLocalNotificationDateInterpretation:
+                  UILocalNotificationDateInterpretation.absoluteTime,
+            );
+            scheduledCount++;
+
+            if (kDebugMode) {
+              print('✅ Bulk scheduled reminder for $prayerName at ${DateFormat('yyyy-MM-dd HH:mm:ss').format(reminderDateTime)}');
+            }
+          } catch (e) {
+            if (kDebugMode) {
+              print('❌ Error bulk scheduling reminder for $prayerName: $e');
+            }
+          }
+        }
+
+        // Schedule prayer time notification
+        try {
+          final scheduledDate = tz.TZDateTime.from(prayerDateTime, malaysiaTz);
+
+          await _flutterLocalNotificationsPlugin.zonedSchedule(
+            notificationIdCounter++,
+            '$prayerName Prayer Time',
+            'It\'s time for $prayerName prayer',
+            scheduledDate,
+            NotificationDetails(
+              android: AndroidNotificationDetails(
+                'prayer_times',
+                'Prayer Times',
+                channelDescription: 'Notifications for prayer times',
+                importance: Importance.max,
+                priority: Priority.max,
+                enableVibration: true,
+                playSound: true,
+                icon: 'ic_notification',
+                largeIcon: const DrawableResourceAndroidBitmap('ic_notification'),
+                autoCancel: false,
+                ongoing: false,
+                showWhen: true,
+                when: prayerDateTime.millisecondsSinceEpoch,
+                category: AndroidNotificationCategory.alarm,
+                visibility: NotificationVisibility.public,
+                fullScreenIntent: true,
+              ),
+              iOS: const DarwinNotificationDetails(
+                presentAlert: true,
+                presentBadge: true,
+                presentSound: true,
+                sound: 'default',
+              ),
+            ),
+            payload: 'bulk_prayer_time_${prayerName}_${DateFormat('yyyy-MM-dd').format(prayerDateTime)}',
+            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime,
+          );
+          scheduledCount++;
+
+          if (kDebugMode) {
+            print('✅ Bulk scheduled prayer time for $prayerName at ${DateFormat('yyyy-MM-dd HH:mm:ss').format(prayerDateTime)}');
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            print('❌ Error bulk scheduling prayer time for $prayerName: $e');
+          }
+        }
+      }
+    }
 
     if (kDebugMode) {
-      print(
-        'Initialized chain scheduling',
-      );
+      print('✅ Bulk scheduling completed: $scheduledCount notifications scheduled');
+      print('📱 All notifications will trigger automatically without user interaction');
     }
+
+    _showInAppNotification(
+      title: '✅ Bulk Schedule Complete',
+      message: 'Scheduled $scheduledCount prayer notifications. All will trigger automatically!',
+      isReminder: false,
+    );
   }
 
   static Future<void> cancelAllNotifications() async {
@@ -897,214 +860,173 @@ class NotificationService {
     }
   }
 
-  // Method to start 1-minute chain testing for debugging notification chaining
-  static Future<void> startOneMinuteChainTest() async {
+  // Method to start recurring test notifications (much better than chaining)
+  static Future<void> startRecurringTestNotifications() async {
     if (kDebugMode) {
-      print('🔥 Starting 1-minute chain test...');
+      print('🔄 Starting recurring test notifications...');
     }
 
-    // Cancel all existing notifications
-    await cancelAllNotifications();
+    // Cancel all existing test notifications
+    await cancelTestNotifications();
 
-    // Schedule the first notification in 1 minute
     final now = DateTime.now();
-    final firstNotificationTime = now.add(const Duration(minutes: 1));
+    final malaysiaTz = tz.getLocation('Asia/Kuala_Lumpur');
 
-    try {
-      final malaysiaTz = tz.getLocation('Asia/Kuala_Lumpur');
-      await _flutterLocalNotificationsPlugin.zonedSchedule(
-        1000, // Use fixed ID for chaining
-        'Chain Test Notification #1',
-        'This is chain test #1 - scheduled for ${DateFormat('HH:mm:ss').format(firstNotificationTime)}',
-        tz.TZDateTime.from(firstNotificationTime, malaysiaTz),
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'test_channel',
-            'Test Notifications',
-            channelDescription: 'Chain test notification',
-            importance: Importance.max,
-            priority: Priority.max,
-            enableVibration: true,
-            playSound: true,
-            fullScreenIntent: true,
-            category: AndroidNotificationCategory.alarm,
-            autoCancel: false,
-            showWhen: true,
-            visibility: NotificationVisibility.public,
+    // Schedule 10 test notifications, one every 2 minutes
+    for (int i = 1; i <= 10; i++) {
+      final notificationTime = now.add(Duration(minutes: i * 2));
+      
+      try {
+        await _flutterLocalNotificationsPlugin.zonedSchedule(
+          8000 + i, // Unique ID for each recurring test notification
+          'Recurring Test #$i',
+          'Auto-scheduled test notification $i of 10 at ${DateFormat('HH:mm:ss').format(notificationTime)}. No tap required!',
+          tz.TZDateTime.from(notificationTime, malaysiaTz),
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'test_channel',
+              'Test Notifications',
+              channelDescription: 'Recurring test notification',
+              importance: Importance.max,
+              priority: Priority.max,
+              enableVibration: true,
+              playSound: true,
+              fullScreenIntent: true,
+              category: AndroidNotificationCategory.alarm,
+              autoCancel: false,
+              showWhen: true,
+              visibility: NotificationVisibility.public,
+            ),
+            iOS: DarwinNotificationDetails(
+              presentAlert: true,
+              presentBadge: true,
+              presentSound: true,
+            ),
           ),
-          iOS: DarwinNotificationDetails(
-            presentAlert: true,
-            presentBadge: true,
-            presentSound: true,
-          ),
-        ),
-        payload:
-            'chain_test_1', // This will trigger the next notification when tapped
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-      );
-
-      // Set up test chain counter
-      _testChainCounter = 1;
-
-      _showInAppNotification(
-        title: '🔥 Chain Test Started',
-        message:
-            'First notification scheduled for ${DateFormat('HH:mm:ss').format(firstNotificationTime)}. Tap notifications to continue chain!',
-        isReminder: false,
-      );
-
-      if (kDebugMode) {
-        print(
-          '✅ Started 1-minute chain test. First notification at ${DateFormat('yyyy-MM-dd HH:mm:ss').format(firstNotificationTime)}',
+          payload: 'recurring_test_$i',
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
         );
-        print('🔗 Tap the notification to trigger the next one in the chain!');
+
+        if (kDebugMode) {
+          print(
+            '✅ Scheduled recurring test #$i for ${DateFormat('yyyy-MM-dd HH:mm:ss').format(notificationTime)}',
+          );
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('❌ Error scheduling recurring test #$i: $e');
+        }
       }
-    } catch (e) {
-      if (kDebugMode) {
-        print('❌ Error starting 1-minute chain test: $e');
-      }
+    }
+
+    _showInAppNotification(
+      title: '🔄 Recurring Test Started',
+      message:
+          'Scheduled 10 notifications every 2 minutes starting at ${DateFormat('HH:mm:ss').format(now.add(const Duration(minutes: 2)))}. No user interaction needed!',
+      isReminder: false,
+    );
+
+    if (kDebugMode) {
+      print(
+        '✅ Started recurring test notifications. 10 notifications scheduled every 2 minutes.',
+      );
+      print('📋 These notifications will appear automatically without any user interaction.');
     }
   }
 
-  // Counter for test chain
-  static int _testChainCounter = 0;
-
-  // Method to schedule the next test notification in the chain
-  static Future<void> _scheduleNextTestNotification() async {
-    _testChainCounter++;
-
-    if (_testChainCounter > 10) {
-      // Limit to 10 test notifications
-      if (kDebugMode) {
-        print('🏁 Test chain completed after 10 notifications');
-      }
-
-      // Show immediate notification indicating completion
-      await _flutterLocalNotificationsPlugin.show(
-        9995,
-        '🏁 Test Chain Complete',
-        'Chain test finished after 10 notifications at ${DateFormat('HH:mm:ss').format(DateTime.now())}',
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'test_channel',
-            'Test Notifications',
-            channelDescription: 'Chain test completion notification',
-            importance: Importance.max,
-            priority: Priority.max,
-            enableVibration: true,
-            playSound: true,
-            icon: 'ic_notify',
-          ),
-          iOS: DarwinNotificationDetails(
-            presentAlert: true,
-            presentBadge: true,
-            presentSound: true,
-          ),
-        ),
-        payload: 'chain_test_complete',
-      );
-
-      _showInAppNotification(
-        title: '🏁 Test Chain Complete',
-        message: 'Chain test finished after 10 notifications',
-        isReminder: false,
-      );
-      return;
+  // Method to cancel only test notifications
+  static Future<void> cancelTestNotifications() async {
+    // Cancel recurring test notifications (IDs 8001-8010)
+    for (int i = 1; i <= 10; i++) {
+      await _flutterLocalNotificationsPlugin.cancel(8000 + i);
     }
+    
+    // Cancel other test notification IDs
+    await _flutterLocalNotificationsPlugin.cancel(9999); // 5-second test
+    await _flutterLocalNotificationsPlugin.cancel(9998); // 30-second test
+    await _flutterLocalNotificationsPlugin.cancel(9996); // Chain response
+    await _flutterLocalNotificationsPlugin.cancel(9995); // Chain complete
+    await _flutterLocalNotificationsPlugin.cancel(1000); // Chain test
+
+    if (kDebugMode) {
+      print('✅ Cancelled all test notifications');
+    }
+  }
+
+  // Method to start daily recurring notifications (better for production use)
+  static Future<void> startDailyRecurringTest() async {
+    if (kDebugMode) {
+      print('📅 Starting daily recurring test notifications...');
+    }
+
+    await cancelTestNotifications();
 
     final now = DateTime.now();
-    final nextNotificationTime = now.add(const Duration(minutes: 1));
+    final malaysiaTz = tz.getLocation('Asia/Kuala_Lumpur');
 
-    // First, show an immediate notification to confirm the chain is working
-    try {
-      await _flutterLocalNotificationsPlugin.show(
-        9996,
-        '🔗 Chain Test Response #${_testChainCounter - 1}',
-        'Previous notification was tapped! Next scheduled for ${DateFormat('HH:mm:ss').format(nextNotificationTime)}',
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'test_channel',
-            'Test Notifications',
-            channelDescription: 'Chain test response notification',
-            importance: Importance.max,
-            priority: Priority.max,
-            enableVibration: true,
-            playSound: true,
-            icon: 'ic_notify',
+    // Schedule a test notification for the next 7 days, same time each day
+    final baseTime = DateTime(now.year, now.month, now.day, now.hour, now.minute + 2);
+    
+    for (int day = 0; day < 7; day++) {
+      final notificationTime = baseTime.add(Duration(days: day));
+      
+      try {
+        await _flutterLocalNotificationsPlugin.zonedSchedule(
+          7000 + day, // Unique ID for each daily notification
+          'Daily Test Day ${day + 1}',
+          'Daily recurring test notification for day ${day + 1} at ${DateFormat('HH:mm').format(notificationTime)}. Fully automatic!',
+          tz.TZDateTime.from(notificationTime, malaysiaTz),
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'test_channel',
+              'Test Notifications',
+              channelDescription: 'Daily recurring test notification',
+              importance: Importance.max,
+              priority: Priority.max,
+              enableVibration: true,
+              playSound: true,
+              fullScreenIntent: true,
+              category: AndroidNotificationCategory.alarm,
+              autoCancel: false,
+              showWhen: true,
+              visibility: NotificationVisibility.public,
+            ),
+            iOS: DarwinNotificationDetails(
+              presentAlert: true,
+              presentBadge: true,
+              presentSound: true,
+            ),
           ),
-          iOS: DarwinNotificationDetails(
-            presentAlert: true,
-            presentBadge: true,
-            presentSound: true,
-          ),
-        ),
-        payload: 'chain_test_response',
-      );
-
-      if (kDebugMode) {
-        print(
-          '✅ Showed immediate response notification for chain test #${_testChainCounter - 1}',
+          payload: 'daily_test_day_${day + 1}',
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
         );
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('❌ Error showing immediate response notification: $e');
+
+        if (kDebugMode) {
+          print(
+            '✅ Scheduled daily test for day ${day + 1} at ${DateFormat('yyyy-MM-dd HH:mm:ss').format(notificationTime)}',
+          );
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('❌ Error scheduling daily test for day ${day + 1}: $e');
+        }
       }
     }
 
-    // Then schedule the next notification in the chain
-    try {
-      final malaysiaTz = tz.getLocation('Asia/Kuala_Lumpur');
-      await _flutterLocalNotificationsPlugin.zonedSchedule(
-        1000, // Use same fixed ID
-        'Chain Test Notification #$_testChainCounter',
-        'This is chain test #$_testChainCounter - scheduled for ${DateFormat('HH:mm:ss').format(nextNotificationTime)}. Tap to continue chain!',
-        tz.TZDateTime.from(nextNotificationTime, malaysiaTz),
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'test_channel',
-            'Test Notifications',
-            channelDescription: 'Chain test notification',
-            importance: Importance.max,
-            priority: Priority.max,
-            enableVibration: true,
-            playSound: true,
-            fullScreenIntent: true,
-            category: AndroidNotificationCategory.alarm,
-            autoCancel: false,
-            showWhen: true,
-            visibility: NotificationVisibility.public,
-          ),
-          iOS: DarwinNotificationDetails(
-            presentAlert: true,
-            presentBadge: true,
-            presentSound: true,
-          ),
-        ),
-        payload: 'chain_test_$_testChainCounter',
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-      );
+    _showInAppNotification(
+      title: '📅 Daily Test Started',
+      message:
+          'Scheduled 7 daily notifications starting ${DateFormat('HH:mm').format(baseTime)}. Completely automatic!',
+      isReminder: false,
+    );
 
-      _showInAppNotification(
-        title: '🔗 Chain Test #$_testChainCounter Scheduled',
-        message:
-            'Next test notification at ${DateFormat('HH:mm:ss').format(nextNotificationTime)}. Previous tap confirmed!',
-        isReminder: false,
-      );
-
-      if (kDebugMode) {
-        print(
-          '🔗 Scheduled next test notification #$_testChainCounter for ${DateFormat('yyyy-MM-dd HH:mm:ss').format(nextNotificationTime)}',
-        );
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('❌ Error scheduling next test notification: $e');
-      }
+    if (kDebugMode) {
+      print('✅ Started daily recurring test notifications for 7 days.');
+      print('📋 These notifications will appear automatically each day.');
     }
   }
 
