@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../localization/app_localization.dart';
 import '../models/prayer_time.dart';
 import '../services/prayer_time_service.dart';
 import '../services/preferences_service.dart';
@@ -315,6 +316,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     IconData icon,
     Color color,
   ) {
+    final l10n = AppLocalization.of(context);
     final isCurrentPrayer = _currentPrayer == prayerName;
 
     return GestureDetector(
@@ -410,7 +412,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    'CURRENT',
+                    l10n.currentPrayer,
                     style: TextStyle(
                       fontSize: 8,
                       fontWeight: FontWeight.bold,
@@ -485,23 +487,27 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalization.of(context);
+    
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ayuh Solat'),
+        title: Text(l10n.appTitle),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _fetchPrayerTimes,
+            tooltip: l10n.refresh,
           ),
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: _navigateToSettings,
+            tooltip: l10n.settings,
           ),
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: Text(l10n.loading))
           : _error != null
           ? Center(
               child: Column(
@@ -517,7 +523,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _loadZoneAndFetchPrayerTimes,
-                    child: const Text('Try Again'),
+                    child: Text(l10n.tryAgain),
                   ),
                 ],
               ),
@@ -538,8 +544,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                   const SizedBox(height: 16),
                   Text(
                     _prayerTimeResponse?.status == 'NO_RECORD!'
-                        ? 'No data available for this zone'
-                        : 'No prayer times available',
+                        ? l10n.noDataAvailable
+                        : l10n.noPrayerTimes,
                     style: const TextStyle(fontSize: 16),
                     textAlign: TextAlign.center,
                   ),
@@ -547,14 +553,14 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
                       child: Text(
-                        'Please change your zone in settings',
+                        l10n.pleaseChangeZone,
                         style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                     ),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _navigateToSettings,
-                    child: const Text('Open Settings'),
+                    child: Text(l10n.openSettings),
                   ),
                 ],
               ),
@@ -565,6 +571,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
 
   Widget _buildPrayerTimesContent() {
     final prayerTime = _prayerTimeResponse!.prayerTimes.first;
+    final l10n = AppLocalization.of(context);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -592,14 +599,14 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${prayerTime.day}, ${prayerTime.date}',
+                    '${l10n.getLocalizedDayName(prayerTime.day)}, ${prayerTime.date}',
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
-                    'Hijri: ${prayerTime.hijri}',
+                    '${l10n.hijriLabel}: ${prayerTime.hijri}',
                     style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 8),
@@ -608,7 +615,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                     style: const TextStyle(fontSize: 14),
                   ),
                   Text(
-                    'Qibla Direction: ${_decodeBearing(_prayerTimeResponse!.bearing)}',
+                    '${l10n.qiblaDirection}: ${_decodeBearing(_prayerTimeResponse!.bearing)}',
                     style: const TextStyle(fontSize: 14),
                   ),
                 ],
@@ -628,37 +635,37 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
             mainAxisSpacing: 8,
             children: [
               _buildPrayerTimeCard(
-                'Fajr',
+                l10n.fajr,
                 prayerTime.fajr,
                 Icons.brightness_2,
                 Colors.blue,
               ),
               _buildPrayerTimeCard(
-                'Syuruk',
+                l10n.syuruk,
                 prayerTime.syuruk,
                 Icons.wb_sunny,
                 Colors.orange,
               ),
               _buildPrayerTimeCard(
-                'Dhuhr',
+                l10n.dhuhr,
                 prayerTime.dhuhr,
                 Icons.wb_sunny,
                 Colors.yellow[700]!,
               ),
               _buildPrayerTimeCard(
-                'Asr',
+                l10n.asr,
                 prayerTime.asr,
                 Icons.wb_twilight,
                 Colors.orange[800]!,
               ),
               _buildPrayerTimeCard(
-                'Maghrib',
+                l10n.maghrib,
                 prayerTime.maghrib,
                 Icons.brightness_3,
                 Colors.deepOrange,
               ),
               _buildPrayerTimeCard(
-                'Isha',
+                l10n.isha,
                 prayerTime.isha,
                 Icons.nights_stay,
                 Colors.purple,
@@ -673,7 +680,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
             children: [
               Center(
                 child: Text(
-                  'Last updated: ${_prayerTimeResponse!.serverTime}',
+                  l10n.lastUpdated(_prayerTimeResponse!.serverTime),
                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
               ),
@@ -699,7 +706,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'Offline Mode',
+                        l10n.offlineMode,
                         style: TextStyle(
                           fontSize: 10,
                           color: Colors.amber[700],

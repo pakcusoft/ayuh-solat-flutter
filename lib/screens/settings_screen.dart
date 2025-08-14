@@ -6,6 +6,7 @@ import '../services/language_service.dart';
 import '../main.dart';
 import 'weekly_schedule_screen.dart';
 import 'testing_screen.dart';
+import 'zone_selection_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -250,8 +251,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildZoneSelector(AppLocalization l10n) {
-    final zones = PrayerTimeService.getZones();
-
     return Card(
       elevation: 2,
       child: Padding(
@@ -275,52 +274,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
               style: const TextStyle(color: Colors.grey, fontSize: 14),
             ),
             const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey[300]!),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  isExpanded: true,
-                  value: _selectedZone,
-                  hint: Text(l10n.selectZone),
-                  items: zones.entries.map((entry) {
-                    return DropdownMenuItem<String>(
-                      value: entry.key,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              entry.key,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                            Text(
-                              entry.value,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey[600],
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                          ],
-                        ),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  final selectedZone = await Navigator.of(context).push<String>(
+                    MaterialPageRoute(
+                      builder: (context) => ZoneSelectionScreen(
+                        currentZone: _selectedZone,
                       ),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    if (newValue != null) {
-                      _saveZone(newValue, l10n);
-                    }
-                  },
+                    ),
+                  );
+                  
+                  if (selectedZone != null && selectedZone != _selectedZone) {
+                    await _saveZone(selectedZone, l10n);
+                  }
+                },
+                icon: const Icon(Icons.search),
+                label: Text(l10n.selectZone),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  side: BorderSide(color: Colors.grey[300]!),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
             ),
@@ -386,7 +366,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalization.of(context)!;
+    final l10n = AppLocalization.of(context);
     
     return Scaffold(
       appBar: AppBar(

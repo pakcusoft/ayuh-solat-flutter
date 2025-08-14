@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../services/notification_service.dart';
+import '../localization/app_localization.dart';
 import 'dart:async';
 
 class TestingScreen extends StatefulWidget {
@@ -72,9 +73,11 @@ class _TestingScreenState extends State<TestingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalization.of(context);
+    
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notification Testing'),
+        title: Text(l10n.notificationTesting),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: SingleChildScrollView(
@@ -98,9 +101,9 @@ class _TestingScreenState extends State<TestingScreen> {
                           color: Theme.of(context).primaryColor,
                         ),
                         const SizedBox(width: 8),
-                        const Text(
-                          'Notification Testing',
-                          style: TextStyle(
+                        Text(
+                          l10n.notificationTesting,
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
@@ -108,9 +111,9 @@ class _TestingScreenState extends State<TestingScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Test various notification functions to ensure they work properly on your device.',
-                      style: TextStyle(color: Colors.grey, fontSize: 14),
+                    Text(
+                      l10n.testNotificationDescription,
+                      style: const TextStyle(color: Colors.grey, fontSize: 14),
                     ),
                   ],
                 ),
@@ -122,16 +125,16 @@ class _TestingScreenState extends State<TestingScreen> {
             // Immediate notifications section
             _buildSection(
               context: context,
-              title: 'Immediate Notifications',
+              title: l10n.immediateNotifications,
               icon: Icons.notifications_active,
               children: [
                 _buildTestButton(
                   context: context,
-                  label: 'Test Basic Notification',
+                  label: l10n.testBasicNotification,
                   icon: Icons.notification_add,
                   onPressed: () async {
                     await NotificationService.showTestNotification();
-                    _showSnackBar(context, 'Test notification sent!');
+                    _showSnackBar(context, l10n.testNotificationSent);
                   },
                 ),
                 // const SizedBox(height: 8),
@@ -148,25 +151,25 @@ class _TestingScreenState extends State<TestingScreen> {
                 const SizedBox(height: 8),
                 _buildTestButton(
                   context: context,
-                  label: 'Test Prayer Reminder',
+                  label: l10n.testPrayerReminder,
                   icon: Icons.schedule,
                   color: Colors.orange,
                   onPressed: () async {
                     await NotificationService.testReminderNotification();
-                    _showSnackBar(context, 'Test reminder sent!');
+                    _showSnackBar(context, l10n.testReminderSent);
                   },
                 ),
                 const SizedBox(height: 8),
                 _buildTestButton(
                   context: context,
-                  label: 'Test Prayer Time',
+                  label: l10n.testPrayerTime,
                   icon: Icons.mosque,
                   color: Colors.green,
                   onPressed: () async {
                     await NotificationService.testPrayerTimeNotification();
                     _showSnackBar(
                       context,
-                      'Test prayer time notification!',
+                      l10n.testPrayerTimeNotificationSent,
                     );
                   },
                 ),
@@ -189,12 +192,12 @@ class _TestingScreenState extends State<TestingScreen> {
             // Scheduled notifications section
             _buildSection(
               context: context,
-              title: 'Scheduled Notifications',
+              title: l10n.scheduledNotifications,
               icon: Icons.schedule,
               children: [
-                const Text(
-                  'Test scheduled notifications (can close app after scheduling):',
-                  style: TextStyle(
+                Text(
+                  l10n.scheduledNotificationDescription,
+                  style: const TextStyle(
                     fontSize: 14,
                     fontStyle: FontStyle.italic,
                     color: Colors.grey,
@@ -233,14 +236,14 @@ class _TestingScreenState extends State<TestingScreen> {
                 const SizedBox(height: 8),
                 _buildTestButton(
                   context: context,
-                  label: 'Test 1-Minute Schedule',
+                  label: l10n.test1MinuteSchedule,
                   icon: Icons.timer,
                   color: Colors.indigo,
                   onPressed: () async {
                     await NotificationService.scheduleTestNotificationForNextMinute();
                     _showSnackBar(
                       context,
-                      'Test notification scheduled for 1 minute! You can close the app to test.',
+                      l10n.testNotificationScheduled1Min,
                       duration: 4,
                     );
                   },
@@ -253,12 +256,12 @@ class _TestingScreenState extends State<TestingScreen> {
             // Recurring notifications section
             _buildSection(
               context: context,
-              title: 'Recurring Notifications',
+              title: l10n.recurringNotifications,
               icon: Icons.repeat,
               children: [
-                const Text(
-                  'Test automatic recurring notifications (no user interaction required):',
-                  style: TextStyle(
+                Text(
+                  l10n.recurringNotificationDescription,
+                  style: const TextStyle(
                     fontSize: 14,
                     fontStyle: FontStyle.italic,
                     color: Colors.grey,
@@ -267,14 +270,14 @@ class _TestingScreenState extends State<TestingScreen> {
                 const SizedBox(height: 8),
                 _buildTestButton(
                   context: context,
-                  label: '🔄 Every 2 Minutes (10x)',
+                  label: l10n.every2Minutes10x,
                   icon: Icons.repeat,
                   color: Colors.deepPurple,
                   onPressed: () async {
                     await NotificationService.startRecurringTestNotifications();
                     _showSnackBar(
                       context,
-                      '🔄 Recurring test started! 10 notifications every 2 minutes. NO user interaction needed!',
+                      l10n.recurringTestStarted,
                       duration: 4,
                     );
                   },
@@ -282,14 +285,14 @@ class _TestingScreenState extends State<TestingScreen> {
                 const SizedBox(height: 8),
                 _buildTestButton(
                   context: context,
-                  label: '📅 Daily Test (7 days)',
+                  label: l10n.dailyTest7Days,
                   icon: Icons.calendar_month,
                   color: Colors.indigo,
                   onPressed: () async {
                     await NotificationService.startDailyRecurringTest();
                     _showSnackBar(
                       context,
-                      '📅 Daily recurring test started! 1 notification per day for 7 days. Completely automatic!',
+                      l10n.dailyRecurringTestStarted,
                       duration: 4,
                     );
                   },
@@ -297,14 +300,14 @@ class _TestingScreenState extends State<TestingScreen> {
                 const SizedBox(height: 8),
                 _buildTestButton(
                   context: context,
-                  label: '❌ Cancel All Tests',
+                  label: l10n.cancelAllTests,
                   icon: Icons.cancel,
                   color: Colors.red,
                   onPressed: () async {
                     await NotificationService.cancelTestNotifications();
                     _showSnackBar(
                       context,
-                      '❌ All test notifications cancelled successfully.',
+                      l10n.allTestNotificationsCancelled,
                       duration: 3,
                     );
                   },
@@ -322,19 +325,19 @@ class _TestingScreenState extends State<TestingScreen> {
             // System diagnostics section
             _buildSection(
               context: context,
-              title: 'System Diagnostics',
+              title: l10n.systemDiagnostics,
               icon: Icons.settings_system_daydream,
               children: [
                 _buildTestButton(
                   context: context,
-                  label: '📋 Check System Status',
+                  label: l10n.checkSystemStatus,
                   icon: Icons.info,
                   color: Colors.blue,
                   onPressed: () async {
                     await NotificationService.checkAndroidNotificationSystemStatus();
                     _showSnackBar(
                       context,
-                      '📋 System status logged to console. Check logs for details.',
+                      l10n.systemStatusLogged,
                       duration: 3,
                     );
                   },
@@ -342,14 +345,14 @@ class _TestingScreenState extends State<TestingScreen> {
                 const SizedBox(height: 8),
                 _buildTestButton(
                   context: context,
-                  label: '🔍 Debug Scheduled Notifications',
+                  label: l10n.debugScheduledNotifications,
                   icon: Icons.bug_report,
                   color: Colors.teal,
                   onPressed: () async {
                     await NotificationService.debugScheduledNotifications();
                     _showSnackBar(
                       context,
-                      '🔍 Scheduled notifications debug info logged to console.',
+                      l10n.scheduledNotificationsDebugLogged,
                       duration: 3,
                     );
                   },
@@ -371,9 +374,9 @@ class _TestingScreenState extends State<TestingScreen> {
                       children: [
                         const Icon(Icons.warning_amber, color: Colors.orange),
                         const SizedBox(width: 8),
-                        const Text(
-                          'Testing Tips',
-                          style: TextStyle(
+                        Text(
+                          l10n.testingTips,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
@@ -381,13 +384,9 @@ class _TestingScreenState extends State<TestingScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      '• For scheduled notifications, you can close the app after scheduling to test background functionality.\n'
-                      '• Check your device\'s notification settings if notifications don\'t appear.\n'
-                      '• Recurring notifications are fully automatic and don\'t require user interaction.\n'
-                      '• Use "Cancel All Tests" to stop recurring notification tests.\n'
-                      '• Check the debug console/logs for detailed information about notification status.',
-                      style: TextStyle(fontSize: 14),
+                    Text(
+                      l10n.testingTipsContent,
+                      style: const TextStyle(fontSize: 14),
                     ),
                   ],
                 ),
@@ -400,6 +399,8 @@ class _TestingScreenState extends State<TestingScreen> {
   }
 
   Widget _buildPendingNotifications() {
+    final l10n = AppLocalization.of(context);
+    
     return Card(
       elevation: 2,
       child: Padding(
@@ -415,7 +416,7 @@ class _TestingScreenState extends State<TestingScreen> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Pending Reminders (${_pendingNotifications.length})',
+                  l10n.pendingReminders(_pendingNotifications.length),
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -425,15 +426,15 @@ class _TestingScreenState extends State<TestingScreen> {
                 IconButton(
                   icon: const Icon(Icons.refresh, size: 20),
                   onPressed: _updatePendingNotifications,
-                  tooltip: 'Refresh',
+                  tooltip: l10n.refresh,
                 ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
               _pendingNotifications.isEmpty
-                  ? 'No pending notifications scheduled'
-                  : 'Scheduled notifications that will trigger automatically (refreshes every 10s)',
+                  ? l10n.noPendingNotifications
+                  : l10n.scheduledNotificationsDescription,
               style: const TextStyle(color: Colors.grey, fontSize: 14),
             ),
             const SizedBox(height: 16),
@@ -446,14 +447,14 @@ class _TestingScreenState extends State<TestingScreen> {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: Colors.grey[300]!),
                 ),
-                child: const Center(
+                child: Center(
                   child: Column(
                     children: [
-                      Icon(Icons.notifications_off, size: 48, color: Colors.grey),
-                      SizedBox(height: 8),
+                      const Icon(Icons.notifications_off, size: 48, color: Colors.grey),
+                      const SizedBox(height: 8),
                       Text(
-                        'No notifications scheduled',
-                        style: TextStyle(color: Colors.grey, fontSize: 16),
+                        l10n.noNotificationsScheduled,
+                        style: const TextStyle(color: Colors.grey, fontSize: 16),
                       ),
                     ],
                   ),
@@ -462,7 +463,7 @@ class _TestingScreenState extends State<TestingScreen> {
             else
               Column(
                 children: _pendingNotifications.take(10).map((notification) {
-                  String displayTitle = notification.title ?? 'Unknown';
+                  String displayTitle = notification.title ?? l10n.unknown;
                   String displayBody = notification.body ?? '';
                   
                   return Container(
@@ -496,7 +497,7 @@ class _TestingScreenState extends State<TestingScreen> {
                               ),
                             ),
                             Text(
-                              'ID: ${notification.id}',
+                              '${l10n.id}: ${notification.id}',
                               style: TextStyle(
                                 fontSize: 10,
                                 color: Colors.blue[500],
@@ -521,7 +522,7 @@ class _TestingScreenState extends State<TestingScreen> {
                           Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
-                              'Type: ${notification.payload}',
+                              '${l10n.type}: ${notification.payload}',
                               style: TextStyle(
                                 fontSize: 10,
                                 color: Colors.blue[400],
@@ -538,7 +539,7 @@ class _TestingScreenState extends State<TestingScreen> {
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    '... and ${_pendingNotifications.length - 10} more notifications',
+                    l10n.andMoreNotifications(_pendingNotifications.length - 10),
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey[600],

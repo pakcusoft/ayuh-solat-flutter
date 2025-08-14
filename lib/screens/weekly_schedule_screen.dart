@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/prayer_time.dart';
 import '../services/database_service.dart';
 import '../services/preferences_service.dart';
+import '../localization/app_localization.dart';
 
 class WeeklyScheduleScreen extends StatefulWidget {
   const WeeklyScheduleScreen({super.key});
@@ -62,14 +63,16 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
       });
 
       if (weeklyTimes.isEmpty) {
+        final l10n = AppLocalization(Locale('ms')); // Use default for error state
         setState(() {
-          _error = 'No cached data available for the upcoming week.\nPlease refresh the main prayer times screen to fetch new data.';
+          _error = l10n.noCachedDataWeek;
         });
       }
     } catch (e) {
+      final l10n = AppLocalization(Locale('ms')); // Use default for error state
       setState(() {
         _isLoading = false;
-        _error = 'Error loading weekly schedule: $e';
+        _error = l10n.errorLoadingWeekly(e.toString());
       });
     }
   }
@@ -84,6 +87,8 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
 
   Widget _buildDataRangeInfo() {
     if (_dataRange == null) return const SizedBox.shrink();
+    
+    final l10n = AppLocalization.of(context);
 
     return Card(
       elevation: 2,
@@ -102,7 +107,7 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Cached Data Range',
+                  l10n.cachedDataRange,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -113,15 +118,15 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Zone: $_selectedZone',
+              '${l10n.zone}: $_selectedZone',
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
             ),
             Text(
-              'From: ${_dataRange!['start_date']}',
+              '${l10n.from}: ${_dataRange!['start_date']}',
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
             Text(
-              'To: ${_dataRange!['end_date']}',
+              '${l10n.to}: ${_dataRange!['end_date']}',
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
           ],
@@ -134,6 +139,8 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
     if (_weeklyPrayerTimes.isEmpty) {
       return const SizedBox.shrink();
     }
+    
+    final l10n = AppLocalization.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,7 +159,7 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Next 7 Days Prayer Schedule',
+                  l10n.nextSevenDays,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -165,7 +172,7 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
         ),
         const SizedBox(height: 8),
         // Individual day cards
-        ..._weeklyPrayerTimes.map((prayerTime) => _buildDayCard(prayerTime)).toList(),
+        ..._weeklyPrayerTimes.map((prayerTime) => _buildDayCard(prayerTime)),
       ],
     );
   }
@@ -245,13 +252,14 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
   }
 
   Widget _buildPrayerTimesGrid(PrayerTime prayerTime, bool isToday) {
+    final l10n = AppLocalization.of(context);
     final prayerData = [
-      {'name': 'Fajr', 'time': prayerTime.fajr, 'icon': Icons.brightness_2},
-      {'name': 'Syuruk', 'time': prayerTime.syuruk, 'icon': Icons.wb_sunny},
-      {'name': 'Dhuhr', 'time': prayerTime.dhuhr, 'icon': Icons.wb_sunny_outlined},
-      {'name': 'Asr', 'time': prayerTime.asr, 'icon': Icons.brightness_6},
-      {'name': 'Maghrib', 'time': prayerTime.maghrib, 'icon': Icons.brightness_4},
-      {'name': 'Isha', 'time': prayerTime.isha, 'icon': Icons.brightness_2_outlined},
+      {'name': l10n.fajr, 'time': prayerTime.fajr, 'icon': Icons.brightness_2},
+      {'name': l10n.syuruk, 'time': prayerTime.syuruk, 'icon': Icons.wb_sunny},
+      {'name': l10n.dhuhr, 'time': prayerTime.dhuhr, 'icon': Icons.wb_sunny_outlined},
+      {'name': l10n.asr, 'time': prayerTime.asr, 'icon': Icons.brightness_6},
+      {'name': l10n.maghrib, 'time': prayerTime.maghrib, 'icon': Icons.brightness_4},
+      {'name': l10n.isha, 'time': prayerTime.isha, 'icon': Icons.brightness_2_outlined},
     ];
 
     return Column(
@@ -323,54 +331,10 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
     );
   }
 
-  Widget _buildTimeCell(String time, bool isToday) {
-    return Text(
-      _formatTime(time),
-      style: TextStyle(
-        fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-        color: isToday ? Theme.of(context).primaryColor : null,
-      ),
-    );
-  }
-
   bool _isToday(String date) {
     final today = DateTime.now();
     final todayStr = _formatDateForDatabase(today);
     return date == todayStr;
-  }
-
-  String _formatDisplayDate(String dbDate) {
-    // Convert from "DD-MMM-YYYY" to "DD/MM"
-    try {
-      final parts = dbDate.split('-');
-      if (parts.length == 3) {
-        return '${parts[0]}/${_getMonthNumber(parts[1]).toString().padLeft(2, '0')}';
-      }
-      return dbDate;
-    } catch (e) {
-      return dbDate;
-    }
-  }
-
-  int _getMonthNumber(String monthAbbr) {
-    const monthMap = {
-      'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
-      'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12
-    };
-    return monthMap[monthAbbr] ?? 1;
-  }
-
-  String _getShortDay(String day) {
-    const dayMap = {
-      'Monday': 'Mon',
-      'Tuesday': 'Tue', 
-      'Wednesday': 'Wed',
-      'Thursday': 'Thu',
-      'Friday': 'Fri',
-      'Saturday': 'Sat',
-      'Sunday': 'Sun'
-    };
-    return dayMap[day] ?? day;
   }
 
   String _formatTime(String time) {
@@ -392,16 +356,18 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
   }
 
   String _getFullDay(String day) {
-    // Return full day name as is
-    return day;
+    final l10n = AppLocalization.of(context);
+    return l10n.getDayName(day);
   }
 
   String _formatFullDisplayDate(String dbDate) {
-    // Convert from "DD-MMM-YYYY" to "DD MMM YYYY"
+    // Convert from "DD-MMM-YYYY" to "DD MMM YYYY" with localized month
     try {
       final parts = dbDate.split('-');
       if (parts.length == 3) {
-        return '${parts[0]} ${parts[1]} ${parts[2]}';
+        final l10n = AppLocalization.of(context);
+        final localizedMonth = l10n.getMonthAbbreviation(parts[1]);
+        return '${parts[0]} $localizedMonth ${parts[2]}';
       }
       return dbDate;
     } catch (e) {
@@ -411,15 +377,17 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalization.of(context);
+    
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Weekly Prayer Schedule'),
+        title: Text(l10n.weeklyPrayerSchedule),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadWeeklySchedule,
-            tooltip: 'Refresh',
+            tooltip: l10n.refresh,
           ),
         ],
       ),
@@ -446,7 +414,7 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: _loadWeeklySchedule,
-                          child: const Text('Try Again'),
+                          child: Text(l10n.tryAgain),
                         ),
                       ],
                     ),
@@ -474,7 +442,7 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'Today\'s row is highlighted. Data is from cached offline storage.',
+                                  l10n.todayHighlightInfo,
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Colors.grey[600],
