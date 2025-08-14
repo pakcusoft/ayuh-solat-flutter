@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../localization/app_localization.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../services/prayer_time_service.dart';
 import '../services/preferences_service.dart';
 import '../services/language_service.dart';
@@ -43,23 +43,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
   }
 
-  Future<void> _saveZone(String zoneCode, AppLocalization l10n) async {
+  Future<void> _saveZone(String zoneCode) async {
     await PreferencesService.saveSelectedZone(zoneCode);
     setState(() {
       _selectedZone = zoneCode;
     });
 
+    // Show confirmation
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(l10n.zoneSaved(zoneCode)),
+          content: Text('Zone saved: $zoneCode'),
           duration: const Duration(seconds: 2),
         ),
       );
     }
   }
 
-  Future<void> _updateNotificationSettings(bool enabled, AppLocalization l10n) async {
+  Future<void> _updateNotificationSettings(bool enabled) async {
     await PreferencesService.saveNotificationsEnabled(enabled);
     setState(() {
       _notificationsEnabled = enabled;
@@ -69,7 +70,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            enabled ? l10n.notificationsEnabled : l10n.notificationsDisabled,
+            enabled ? 'Notifications enabled' : 'Notifications disabled',
           ),
           duration: const Duration(seconds: 2),
         ),
@@ -77,7 +78,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _updateAdzanSettings(bool enabled, AppLocalization l10n) async {
+  Future<void> _updateAdzanSettings(bool enabled) async {
     await PreferencesService.saveAdzanEnabled(enabled);
     setState(() {
       _adzanEnabled = enabled;
@@ -87,7 +88,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            enabled ? l10n.adzanEnabled : l10n.adzanDisabled,
+            enabled ? 'Adzan sound enabled' : 'Adzan sound disabled',
           ),
           duration: const Duration(seconds: 2),
         ),
@@ -95,7 +96,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _updateLanguageSettings(String languageCode, AppLocalization l10n) async {
+  Future<void> _updateLanguageSettings(String languageCode) async {
     await LanguageService.saveSelectedLanguage(languageCode);
     setState(() {
       _selectedLanguage = languageCode;
@@ -111,14 +112,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final languageName = LanguageService.getLanguageName(languageCode);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(l10n.languageSaved(languageName)),
+          content: Text('Language saved: $languageName'),
           duration: const Duration(seconds: 2),
         ),
       );
     }
   }
 
-  Widget _buildLanguageSelector(AppLocalization l10n) {
+  Widget _buildLanguageSelector(AppLocalizations l10n) {
     return Card(
       elevation: 2,
       child: Padding(
@@ -164,7 +165,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                   onChanged: (String? newValue) {
                     if (newValue != null) {
-                      _updateLanguageSettings(newValue, l10n);
+                      _updateLanguageSettings(newValue);
                     }
                   },
                 ),
@@ -176,7 +177,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildNotificationSettings(AppLocalization l10n) {
+  Widget _buildNotificationSettings() {
     return Card(
       elevation: 2,
       child: Padding(
@@ -191,16 +192,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   color: Theme.of(context).primaryColor,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  l10n.notifications,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                const Text(
+                  'Notifications',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              l10n.notificationsSubtitle,
-              style: const TextStyle(color: Colors.grey, fontSize: 14),
+            const Text(
+              'Get reminded 10 minutes before prayer time and when it\'s time to pray.',
+              style: TextStyle(color: Colors.grey, fontSize: 14),
             ),
             const SizedBox(height: 16),
 
@@ -211,13 +212,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: SwitchListTile(
-                title: Text(
-                  l10n.prayerTimeNotifications,
-                  style: const TextStyle(fontWeight: FontWeight.w500),
+                title: const Text(
+                  'Prayer Time Notifications',
+                  style: TextStyle(fontWeight: FontWeight.w500),
                 ),
-                subtitle: Text(l10n.receiveNotifications),
+                subtitle: const Text('Receive notifications for prayer times'),
                 value: _notificationsEnabled,
-                onChanged: (value) => _updateNotificationSettings(value, l10n),
+                onChanged: _updateNotificationSettings,
                 activeColor: Theme.of(context).primaryColor,
               ),
             ),
@@ -231,25 +232,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: SwitchListTile(
-                title: Text(
-                  l10n.adzanSound,
-                  style: const TextStyle(fontWeight: FontWeight.w500),
+                title: const Text(
+                  'Adzan Sound',
+                  style: TextStyle(fontWeight: FontWeight.w500),
                 ),
-                subtitle: Text(
-                  l10n.playAdzanSound,
+                subtitle: const Text(
+                  'Play adzan sound when prayer time arrives',
                 ),
                 value: _adzanEnabled,
-                onChanged: (value) => _updateAdzanSettings(value, l10n),
+                onChanged: _updateAdzanSettings,
                 activeColor: Theme.of(context).primaryColor,
               ),
             ),
+
           ],
         ),
       ),
     );
   }
 
-  Widget _buildZoneSelector(AppLocalization l10n) {
+  Widget _buildZoneSelector() {
     final zones = PrayerTimeService.getZones();
 
     return Card(
@@ -263,16 +265,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Icon(Icons.location_on, color: Theme.of(context).primaryColor),
                 const SizedBox(width: 8),
-                Text(
-                  l10n.prayerTimeZone,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                const Text(
+                  'Prayer Time Zone',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              l10n.selectLocation,
-              style: const TextStyle(color: Colors.grey, fontSize: 14),
+            const Text(
+              'Select your location to get accurate prayer times',
+              style: TextStyle(color: Colors.grey, fontSize: 14),
             ),
             const SizedBox(height: 16),
             Container(
@@ -285,7 +287,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: DropdownButton<String>(
                   isExpanded: true,
                   value: _selectedZone,
-                  hint: Text(l10n.selectZone),
+                  hint: const Text('Select Zone'),
                   items: zones.entries.map((entry) {
                     return DropdownMenuItem<String>(
                       value: entry.key,
@@ -318,7 +320,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   }).toList(),
                   onChanged: (String? newValue) {
                     if (newValue != null) {
-                      _saveZone(newValue, l10n);
+                      _saveZone(newValue);
                     }
                   },
                 ),
@@ -330,7 +332,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildCurrentZoneInfo(AppLocalization l10n) {
+  Widget _buildCurrentZoneInfo() {
     final zones = PrayerTimeService.getZones();
     final zoneName = zones[_selectedZone] ?? 'Unknown Zone';
 
@@ -346,9 +348,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Icon(Icons.check_circle, color: Theme.of(context).primaryColor),
                 const SizedBox(width: 8),
-                Text(
-                  l10n.currentZone,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                const Text(
+                  'Current Zone',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -384,9 +386,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalization.of(context)!;
+    final l10n = AppLocalizations.of(context)!;
     
     return Scaffold(
       appBar: AppBar(
@@ -425,13 +428,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildCurrentZoneInfo(l10n),
+                  _buildCurrentZoneInfo(),
                   const SizedBox(height: 16),
-                  _buildLanguageSelector(l10n),
+                  _buildLanguageSelector(),
                   const SizedBox(height: 16),
-                  _buildZoneSelector(l10n),
+                  _buildZoneSelector(),
                   const SizedBox(height: 16),
-                  _buildNotificationSettings(l10n),
+                  _buildNotificationSettings(),
                   const SizedBox(height: 24),
 
                   // Weekly Schedule section
@@ -449,9 +452,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 color: Theme.of(context).primaryColor,
                               ),
                               const SizedBox(width: 8),
-                              Text(
-                                l10n.prayerSchedule,
-                                style: const TextStyle(
+                              const Text(
+                                'Prayer Schedule',
+                                style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -459,9 +462,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Text(
-                            l10n.viewWeeklySchedule,
-                            style: const TextStyle(color: Colors.grey, fontSize: 14),
+                          const Text(
+                            'View prayer times for the upcoming week.',
+                            style: TextStyle(color: Colors.grey, fontSize: 14),
                           ),
                           const SizedBox(height: 16),
                           SizedBox(
@@ -476,7 +479,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 );
                               },
                               icon: const Icon(Icons.table_chart),
-                              label: Text(l10n.viewWeeklyScheduleButton),
+                              label: const Text('View Weekly Schedule'),
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 12,
@@ -506,9 +509,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 color: Theme.of(context).primaryColor,
                               ),
                               const SizedBox(width: 8),
-                              Text(
-                                l10n.about,
-                                style: const TextStyle(
+                              const Text(
+                                'About',
+                                style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -516,14 +519,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ],
                           ),
                           const SizedBox(height: 12),
-                          Text(
-                            l10n.aboutText,
-                            style: const TextStyle(fontSize: 14),
+                          const Text(
+                            'Prayer times are provided by JAKIM (Jabatan Kemajuan Islam Malaysia) e-Solat API.',
+                            style: TextStyle(fontSize: 14),
                           ),
                           const SizedBox(height: 8),
-                          Text(
-                            l10n.dataUpdated,
-                            style: const TextStyle(fontSize: 14),
+                          const Text(
+                            'Data is updated in real-time.',
+                            style: TextStyle(fontSize: 14),
                           ),
                         ],
                       ),

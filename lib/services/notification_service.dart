@@ -334,6 +334,7 @@ class NotificationService {
             enableVibration: true,
             playSound: true,
             icon: 'ic_notify',
+            sound: RawResourceAndroidNotificationSound('adzan'),
             largeIcon: const DrawableResourceAndroidBitmap('ic_notification'),
             autoCancel: false,
             ongoing: false,
@@ -394,6 +395,7 @@ class NotificationService {
           enableVibration: true,
           playSound: true,
           icon: 'ic_notify',
+          sound: channelId == 'prayer_times' ? RawResourceAndroidNotificationSound('adzan') : null,
           largeIcon: const DrawableResourceAndroidBitmap('ic_notification'),
           styleInformation: BigTextStyleInformation(body, contentTitle: title),
         );
@@ -574,6 +576,7 @@ class NotificationService {
                 enableVibration: true,
                 playSound: true,
                 icon: 'ic_notification',
+                sound: RawResourceAndroidNotificationSound('adzan'),
                 largeIcon: const DrawableResourceAndroidBitmap('ic_notification'),
                 autoCancel: false,
                 ongoing: false,

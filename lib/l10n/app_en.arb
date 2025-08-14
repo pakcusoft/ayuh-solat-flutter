@@ -1,0 +1,108 @@
+{
+  "appTitle": "Ayuh Solat",
+  "settings": "Settings",
+  "language": "Language",
+  "languageSubtitle": "Choose your preferred language",
+  "english": "English",
+  "bahasa": "Bahasa Melayu",
+  "languageSaved": "Language saved: {language}",
+  "@languageSaved": {
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "notifications": "Notifications",
+  "notificationsSubtitle": "Get reminded 10 minutes before prayer time and when it's time to pray.",
+  "prayerTimeNotifications": "Prayer Time Notifications",
+  "receiveNotifications": "Receive notifications for prayer times",
+  "adzanSound": "Adzan Sound",
+  "playAdzanSound": "Play adzan sound when prayer time arrives",
+  "notificationsEnabled": "Notifications enabled",
+  "notificationsDisabled": "Notifications disabled",
+  "adzanEnabled": "Adzan sound enabled",
+  "adzanDisabled": "Adzan sound disabled",
+  "prayerTimeZone": "Prayer Time Zone",
+  "selectZone": "Select Zone",
+  "selectLocation": "Select your location to get accurate prayer times",
+  "zoneSaved": "Zone saved: {zone}",
+  "@zoneSaved": {
+    "placeholders": {
+      "zone": {
+        "type": "String"
+      }
+    }
+  },
+  "currentZone": "Current Zone",
+  "prayerSchedule": "Prayer Schedule",
+  "viewWeeklySchedule": "View prayer times for the upcoming week.",
+  "viewWeeklyScheduleButton": "View Weekly Schedule",
+  "notificationTesting": "Notification Testing",
+  "about": "About",
+  "aboutText": "Prayer times are provided by JAKIM (Jabatan Kemajuan Islam Malaysia) e-Solat API.",
+  "dataUpdated": "Data is updated in real-time.",
+  "fajr": "Fajr",
+  "dhuhr": "Dhuhr", 
+  "asr": "Asr",
+  "maghrib": "Maghrib",
+  "isha": "Isha",
+  "today": "Today",
+  "loading": "Loading...",
+  "errorLoadingPrayerTimes": "Failed to load prayer times",
+  "errorLoadingPreferences": "Error loading preferences: {error}",
+  "@errorLoadingPreferences": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "error": "Error: {error}",
+  "@error": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "refresh": "Refresh",
+  "lastUpdated": "Last updated: {time}",
+  "@lastUpdated": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "nextPrayer": "Next Prayer",
+  "timeRemaining": "Time Remaining",
+  "currentPrayer": "Current Prayer",
+  "prayerReminder": "Prayer Reminder",
+  "prayerReminderBody": "Time for {prayer} prayer in 10 minutes",
+  "@prayerReminderBody": {
+    "placeholders": {
+      "prayer": {
+        "type": "String"
+      }
+    }
+  },
+  "prayerTime": "Prayer Time",
+  "prayerTimeBody": "It's time for {prayer} prayer",
+  "@prayerTimeBody": {
+    "placeholders": {
+      "prayer": {
+        "type": "String"
+      }
+    }
+  },
+  "testNotification": "Test Notification",
+  "testNotificationBody": "This is a test notification scheduled at {time}",
+  "@testNotificationBody": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  }
+}
