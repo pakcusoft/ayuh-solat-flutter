@@ -436,5 +436,5 @@ class AppLocalizationDelegate extends LocalizationsDelegate<AppLocalization> {
   }
 
   @override
-  bool shouldReload(AppLocalizationDelegate old) => false;
+  bool shouldReload(AppLocalizationDelegate old) => true;
 }

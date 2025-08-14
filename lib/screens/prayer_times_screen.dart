@@ -245,6 +245,17 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     }
   }
 
+  // Helper method to get English prayer name from localized name
+  String _getEnglishPrayerName(String localizedName) {
+    final l10n = AppLocalization.of(context);
+    if (localizedName == l10n.fajr) return 'Fajr';
+    if (localizedName == l10n.dhuhr) return 'Dhuhr';
+    if (localizedName == l10n.asr) return 'Asr';
+    if (localizedName == l10n.maghrib) return 'Maghrib';
+    if (localizedName == l10n.isha) return 'Isha';
+    return localizedName; // fallback
+  }
+
   DateTime? _parseTime(String timeString) {
     try {
       final parts = timeString.split(':');
@@ -317,7 +328,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     Color color,
   ) {
     final l10n = AppLocalization.of(context);
-    final isCurrentPrayer = _currentPrayer == prayerName;
+    // Convert localized prayer name to English for comparison
+    final englishPrayerName = _getEnglishPrayerName(prayerName);
+    final isCurrentPrayer = _currentPrayer == englishPrayerName;
 
     return GestureDetector(
       onTap: () {

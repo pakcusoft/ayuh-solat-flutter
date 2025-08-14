@@ -124,7 +124,8 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
     
     // If the prayer time has passed today and it's before midnight, 
     // it might be for tomorrow (like Fajr)
-    if (prayerDateTime.isBefore(now) && widget.prayerName == 'Fajr') {
+    final englishPrayerName = _getEnglishPrayerName(widget.prayerName);
+    if (prayerDateTime.isBefore(now) && englishPrayerName == 'Fajr') {
       prayerDateTime = prayerDateTime.add(const Duration(days: 1));
     }
     
@@ -141,8 +142,11 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
       {'name': 'Isha', 'time': widget.prayerTimeData.isha},
     ];
 
+    // Convert localized prayer name to English for comparison
+    final englishPrayerName = _getEnglishPrayerName(widget.prayerName);
+    
     // Find current prayer index
-    int currentIndex = prayers.indexWhere((prayer) => prayer['name'] == widget.prayerName);
+    int currentIndex = prayers.indexWhere((prayer) => prayer['name'] == englishPrayerName);
     
     // Return next prayer time, or null if this is the last prayer
     if (currentIndex >= 0 && currentIndex < prayers.length - 1) {
@@ -162,8 +166,11 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
       {'name': 'Isha', 'time': widget.prayerTimeData.isha},
     ];
 
+    // Convert localized prayer name to English for comparison
+    final englishPrayerName = _getEnglishPrayerName(widget.prayerName);
+    
     // Find current prayer index
-    int currentIndex = prayers.indexWhere((prayer) => prayer['name'] == widget.prayerName);
+    int currentIndex = prayers.indexWhere((prayer) => prayer['name'] == englishPrayerName);
     
     // Return next prayer name, or null if this is the last prayer
     if (currentIndex >= 0 && currentIndex < prayers.length - 1) {
@@ -197,6 +204,28 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
     } catch (e) {
       return time;
     }
+  }
+
+  // Helper method to get English prayer name from localized name
+  String _getEnglishPrayerName(String localizedName) {
+    // Since this screen doesn't have context in this scope, we'll use a different approach
+    // We'll create a simple mapping based on common translations
+    const prayerNameMap = {
+      // English names (unchanged)
+      'Fajr': 'Fajr',
+      'Syuruk': 'Syuruk', 
+      'Dhuhr': 'Dhuhr',
+      'Asr': 'Asr',
+      'Maghrib': 'Maghrib',
+      'Isha': 'Isha',
+      // Malay names
+      'Subuh': 'Fajr',
+      'Zohor': 'Dhuhr',
+      'Asar': 'Asr',
+      'Isyak': 'Isha',
+    };
+    
+    return prayerNameMap[localizedName] ?? localizedName;
   }
 
   @override
