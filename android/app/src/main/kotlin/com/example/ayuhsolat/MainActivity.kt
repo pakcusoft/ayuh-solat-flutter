@@ -1,4 +1,4 @@
-package com.example.ayuhsolat
+package com.webgeaz.app.ayuhsolat
 
 import io.flutter.embedding.android.FlutterActivity
 

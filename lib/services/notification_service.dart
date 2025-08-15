@@ -10,6 +10,7 @@ import '../models/prayer_time.dart';
 import 'preferences_service.dart';
 import 'database_service.dart';
 import 'language_service.dart';
+import 'widget_service.dart';
 import '../localization/app_localization.dart';
 
 /// NotificationService handles prayer time notifications using scheduled system notifications.
@@ -102,7 +103,7 @@ class NotificationService {
     await _createNotificationChannels();
   }
 
-  /// Simplified notification response handler for adzan playback only
+  /// Notification response handler with widget update trigger
   @pragma('vm:entry-point')
   static Future<void> _onNotificationResponse(
     NotificationResponse notificationResponse,
@@ -115,12 +116,27 @@ class NotificationService {
       final payload = notificationResponse.payload;
       if (payload == null) return;
 
-      // Handle prayer time notifications by playing adzan
+      // Handle prayer time notifications by playing adzan and updating widget
       if (payload.startsWith('prayer_time_')) {
         if (kDebugMode) {
           print('🕌 Playing adzan for prayer time notification');
         }
         // await _playAdzan();
+        
+        // Update widget when prayer time notification is triggered
+        await WidgetService.updateWidget();
+        if (kDebugMode) {
+          print('🔄 Widget updated after prayer time notification');
+        }
+      }
+      
+      // Handle reminder notifications - also update widget
+      if (payload.startsWith('reminder_') || payload.startsWith('bulk_reminder_')) {
+        // Update widget when reminder notification is triggered
+        await WidgetService.updateWidget();
+        if (kDebugMode) {
+          print('🔄 Widget updated after reminder notification');
+        }
       }
 
       if (kDebugMode) {

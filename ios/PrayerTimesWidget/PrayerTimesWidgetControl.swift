@@ -10,7 +10,7 @@ import SwiftUI
 import WidgetKit
 
 struct PrayerTimesWidgetControl: ControlWidget {
-    static let kind: String = "com.example.ayuhsolat.PrayerTimesWidget"
+    static let kind: String = "com.webgeaz.app.ayuhsolat.PrayerTimesWidget"
 
     var body: some ControlWidgetConfiguration {
         AppIntentControlConfiguration(

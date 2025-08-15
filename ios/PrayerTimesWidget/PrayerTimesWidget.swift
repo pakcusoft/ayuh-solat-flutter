@@ -12,7 +12,7 @@ struct Provider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
-        let userDefaults = UserDefaults(suiteName: "group.com.example.ayuhsolat")
+        let userDefaults = UserDefaults(suiteName: "group.com.webgeaz.app.ayuhsolat")
         let fajr = userDefaults?.string(forKey: "fajr") ?? "-"
         let dhuhr = userDefaults?.string(forKey: "dhuhr") ?? "-"
         let asr = userDefaults?.string(forKey: "asr") ?? "-"

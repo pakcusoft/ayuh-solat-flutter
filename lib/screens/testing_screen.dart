@@ -38,7 +38,8 @@ class _TestingScreenState extends State<TestingScreen> {
 
   Future<void> _updatePendingNotifications() async {
     try {
-      final pendingNotifications = await NotificationService.getPendingNotifications();
+      final pendingNotifications =
+          await NotificationService.getPendingNotifications();
       if (mounted) {
         setState(() {
           _pendingNotifications = pendingNotifications;
@@ -51,7 +52,7 @@ class _TestingScreenState extends State<TestingScreen> {
 
   IconData _getNotificationIcon(String? payload) {
     if (payload == null) return Icons.notifications;
-    
+
     if (payload.contains('reminder')) {
       return Icons.timer;
     } else if (payload.contains('prayer_time')) {
@@ -67,14 +68,14 @@ class _TestingScreenState extends State<TestingScreen> {
     } else if (payload.contains('bulk')) {
       return Icons.schedule_send;
     }
-    
+
     return Icons.notification_important;
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalization.of(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.notificationTesting),
@@ -113,7 +114,10 @@ class _TestingScreenState extends State<TestingScreen> {
                     const SizedBox(height: 8),
                     Text(
                       l10n.testNotificationDescription,
-                      style: const TextStyle(color: Colors.grey, fontSize: 14),
+                      style: const TextStyle(
+                        color: Colors.black87,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
@@ -167,10 +171,7 @@ class _TestingScreenState extends State<TestingScreen> {
                   color: Colors.green,
                   onPressed: () async {
                     await NotificationService.testPrayerTimeNotification();
-                    _showSnackBar(
-                      context,
-                      l10n.testPrayerTimeNotificationSent,
-                    );
+                    _showSnackBar(context, l10n.testPrayerTimeNotificationSent);
                   },
                 ),
                 // const SizedBox(height: 8),
@@ -400,7 +401,7 @@ class _TestingScreenState extends State<TestingScreen> {
 
   Widget _buildPendingNotifications() {
     final l10n = AppLocalization.of(context);
-    
+
     return Card(
       elevation: 2,
       child: Padding(
@@ -410,10 +411,7 @@ class _TestingScreenState extends State<TestingScreen> {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.schedule,
-                  color: Theme.of(context).primaryColor,
-                ),
+                Icon(Icons.schedule, color: Theme.of(context).primaryColor),
                 const SizedBox(width: 8),
                 Text(
                   l10n.pendingReminders(_pendingNotifications.length),
@@ -438,7 +436,7 @@ class _TestingScreenState extends State<TestingScreen> {
               style: const TextStyle(color: Colors.grey, fontSize: 14),
             ),
             const SizedBox(height: 16),
-            
+
             if (_pendingNotifications.isEmpty)
               Container(
                 padding: const EdgeInsets.all(20),
@@ -450,11 +448,18 @@ class _TestingScreenState extends State<TestingScreen> {
                 child: Center(
                   child: Column(
                     children: [
-                      const Icon(Icons.notifications_off, size: 48, color: Colors.grey),
+                      const Icon(
+                        Icons.notifications_off,
+                        size: 48,
+                        color: Colors.grey,
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         l10n.noNotificationsScheduled,
-                        style: const TextStyle(color: Colors.grey, fontSize: 16),
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 16,
+                        ),
                       ),
                     ],
                   ),
@@ -465,7 +470,7 @@ class _TestingScreenState extends State<TestingScreen> {
                 children: _pendingNotifications.take(10).map((notification) {
                   String displayTitle = notification.title ?? l10n.unknown;
                   String displayBody = notification.body ?? '';
-                  
+
                   return Container(
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.all(12),
@@ -535,18 +540,18 @@ class _TestingScreenState extends State<TestingScreen> {
                   );
                 }).toList(),
               ),
-              if (_pendingNotifications.length > 10)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    l10n.andMoreNotifications(_pendingNotifications.length - 10),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                      fontStyle: FontStyle.italic,
-                    ),
+            if (_pendingNotifications.length > 10)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  l10n.andMoreNotifications(_pendingNotifications.length - 10),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                    fontStyle: FontStyle.italic,
                   ),
                 ),
+              ),
           ],
         ),
       ),
