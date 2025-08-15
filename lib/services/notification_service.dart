@@ -9,6 +9,8 @@ import 'package:timezone/data/latest.dart' as tz;
 import '../models/prayer_time.dart';
 import 'preferences_service.dart';
 import 'database_service.dart';
+import 'language_service.dart';
+import '../localization/app_localization.dart';
 
 /// NotificationService handles prayer time notifications using scheduled system notifications.
 ///
@@ -42,6 +44,13 @@ class NotificationService {
       _recentNotifications;
   static Stream<Map<String, dynamic>>? get notificationStream =>
       _notificationController?.stream;
+
+  /// Get localized AppLocalization instance for current saved language
+  static Future<AppLocalization> _getLocalization() async {
+    final languageCode = await LanguageService.getSelectedLanguage();
+    final locale = LanguageService.getLocale(languageCode);
+    return AppLocalization(locale);
+  }
 
   static Future<void> initialize() async {
     if (kDebugMode) {
@@ -248,14 +257,18 @@ class NotificationService {
       final id = 1000; // Use fixed ID for single notification
       final timeStr = DateFormat('HH:mm').format(prayerTime);
 
+      // Get localization for notification texts
+      final l10n = await _getLocalization();
+      final localizedPrayerName = l10n.getLocalizedPrayerName(prayerName);
+      
       // Convert to Malaysia timezone (UTC+8)
       final malaysiaTz = tz.getLocation('Asia/Kuala_Lumpur');
       final scheduledDate = tz.TZDateTime.from(reminderTime, malaysiaTz);
 
       await _flutterLocalNotificationsPlugin.zonedSchedule(
         id,
-        '$prayerName Prayer Reminder',
-        '$prayerName prayer in 10 minutes at $timeStr',
+        l10n.prayerReminderTitle(localizedPrayerName),
+        l10n.prayerReminderBodyWithTime(localizedPrayerName, timeStr),
         scheduledDate,
         NotificationDetails(
           android: AndroidNotificationDetails(
@@ -315,14 +328,18 @@ class NotificationService {
     try {
       final id = 2000; // Use fixed ID for single notification
 
+      // Get localization for notification texts
+      final l10n = await _getLocalization();
+      final localizedPrayerName = l10n.getLocalizedPrayerName(prayerName);
+
       // Convert to Malaysia timezone (UTC+8)
       final malaysiaTz = tz.getLocation('Asia/Kuala_Lumpur');
       final scheduledDate = tz.TZDateTime.from(prayerTime, malaysiaTz);
 
       await _flutterLocalNotificationsPlugin.zonedSchedule(
         id,
-        '$prayerName Prayer Time',
-        'It\'s time for $prayerName prayer',
+        l10n.prayerTimeTitle(localizedPrayerName),
+        l10n.prayerTimeBody(localizedPrayerName),
         scheduledDate,
         NotificationDetails(
           android: AndroidNotificationDetails(
@@ -472,6 +489,8 @@ class NotificationService {
     int notificationIdCounter = 3000; // Start from 3000 to avoid conflicts
     int scheduledCount = 0;
 
+    // Get localization for notification texts
+    final l10n = await _getLocalization();
     final malaysiaTz = tz.getLocation('Asia/Kuala_Lumpur');
 
     for (final prayerTime in prayerTimes) {
@@ -508,11 +527,12 @@ class NotificationService {
           try {
             final timeStr = DateFormat('HH:mm').format(prayerDateTime);
             final scheduledDate = tz.TZDateTime.from(reminderDateTime, malaysiaTz);
+            final localizedPrayerName = l10n.getLocalizedPrayerName(prayerName);
 
             await _flutterLocalNotificationsPlugin.zonedSchedule(
               notificationIdCounter++,
-              '$prayerName Prayer Reminder',
-              '$prayerName prayer in 10 minutes at $timeStr',
+              l10n.prayerReminderTitle(localizedPrayerName),
+              l10n.prayerReminderBodyWithTime(localizedPrayerName, timeStr),
               scheduledDate,
               NotificationDetails(
                 android: AndroidNotificationDetails(
@@ -560,11 +580,12 @@ class NotificationService {
         // Schedule prayer time notification
         try {
           final scheduledDate = tz.TZDateTime.from(prayerDateTime, malaysiaTz);
+          final localizedPrayerName = l10n.getLocalizedPrayerName(prayerName);
 
           await _flutterLocalNotificationsPlugin.zonedSchedule(
             notificationIdCounter++,
-            '$prayerName Prayer Time',
-            'It\'s time for $prayerName prayer',
+            l10n.prayerTimeTitle(localizedPrayerName),
+            l10n.prayerTimeBody(localizedPrayerName),
             scheduledDate,
             NotificationDetails(
               android: AndroidNotificationDetails(
@@ -1185,11 +1206,14 @@ class NotificationService {
   }
 
   static Future<void> testReminderNotification() async {
+    final l10n = await _getLocalization();
+    final localizedPrayerName = l10n.getLocalizedPrayerName('Dhuhr');
+    
     // Show system notification
     await _showSystemNotification(
       id: 998,
-      title: 'Test Prayer Reminder',
-      body: 'Test: Dhuhr prayer in 10 minutes at 12:30',
+      title: l10n.prayerReminderTitle(localizedPrayerName),
+      body: l10n.prayerReminderBodyWithTime(localizedPrayerName, '12:30'),
       channelId: 'prayer_reminders',
       importance: Importance.high,
       priority: Priority.high,
@@ -1197,18 +1221,21 @@ class NotificationService {
 
     // Show in-app notification
     _showInAppNotification(
-      title: 'Test Prayer Reminder',
-      message: 'Test: Dhuhr prayer in 10 minutes at 12:30',
+      title: l10n.prayerReminderTitle(localizedPrayerName),
+      message: l10n.prayerReminderBodyWithTime(localizedPrayerName, '12:30'),
       isReminder: true,
     );
   }
 
   static Future<void> testPrayerTimeNotification() async {
+    final l10n = await _getLocalization();
+    final localizedPrayerName = l10n.getLocalizedPrayerName('Dhuhr');
+    
     // Show system notification
     await _showSystemNotification(
       id: 997,
-      title: 'Test Prayer Time',
-      body: 'Test: It\'s time for Dhuhr prayer',
+      title: l10n.prayerTimeTitle(localizedPrayerName),
+      body: l10n.prayerTimeBody(localizedPrayerName),
       channelId: 'prayer_times',
       importance: Importance.max,
       priority: Priority.max,
@@ -1216,8 +1243,8 @@ class NotificationService {
 
     // Show in-app notification
     _showInAppNotification(
-      title: 'Test Prayer Time',
-      message: 'Test: It\'s time for Dhuhr prayer',
+      title: l10n.prayerTimeTitle(localizedPrayerName),
+      message: l10n.prayerTimeBody(localizedPrayerName),
       isReminder: false,
     );
     // await testAdzanPlayback();

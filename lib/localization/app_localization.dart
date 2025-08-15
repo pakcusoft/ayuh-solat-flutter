@@ -365,6 +365,31 @@ class AppLocalization {
       ? 'This is a test notification scheduled at $time'
       : 'Ini adalah pemberitahuan ujian dijadualkan pada $time';
       
+  // Notification titles for specific prayers with times
+  String prayerReminderTitle(String prayer) => locale.languageCode == 'en'
+      ? '$prayer Prayer Reminder'
+      : 'Peringatan Solat $prayer';
+      
+  String prayerTimeTitle(String prayer) => locale.languageCode == 'en'
+      ? '$prayer Prayer Time'
+      : 'Waktu Solat $prayer';
+      
+  String prayerReminderBodyWithTime(String prayer, String time) => locale.languageCode == 'en'
+      ? '$prayer prayer in 10 minutes at $time'
+      : 'Solat $prayer dalam 10 minit pada $time';
+      
+  // Method to get localized prayer name by English name
+  String getLocalizedPrayerName(String englishPrayerName) {
+    switch (englishPrayerName.toLowerCase()) {
+      case 'fajr': return fajr;
+      case 'dhuhr': return dhuhr;
+      case 'asr': return asr;
+      case 'maghrib': return maghrib;
+      case 'isha': return isha;
+      default: return englishPrayerName;
+    }
+  }
+      
   // Status labels
   String get currentPrayer => locale.languageCode == 'en' 
       ? 'CURRENT' 
