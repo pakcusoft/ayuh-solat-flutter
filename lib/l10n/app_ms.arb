@@ -48,5 +48,20 @@
   "prayerTime": "Waktu Solat",
   "prayerTimeBody": "Sudah tiba masa untuk solat {prayer}",
   "testNotification": "Pemberitahuan Ujian",
-  "testNotificationBody": "Ini adalah pemberitahuan ujian dijadualkan pada {time}"
+  "testNotificationBody": "Ini adalah pemberitahuan ujian dijadualkan pada {time}",
+  "syuruk": "Syuruk",
+  "prayerDetail": "Butiran Solat",
+  "timeRemainingUntil": "Masa berbaki sehingga {prayer}",
+  "prayerIsOngoing": "{prayer} sedang berlangsung",
+  "nextPrayerIn": "Seterusnya: {prayer} dalam {time}",
+  "prayerTimeHasEnded": "Waktu solat {prayer} telah berakhir",
+  "nextPrayerHasStarted": "Solat seterusnya telah bermula",
+  "prayerCompleted": "Solat selesai",
+  "dateInformation": "Maklumat Tarikh",
+  "gregorian": "Gregorian",
+  "hijri": "Hijri",
+  "currentTime": "Masa Semasa",
+  "active": "AKTIF",
+  "ended": "BERAKHIR",
+  "upcoming": "AKAN DATANG"
 }

@@ -177,4 +177,57 @@ class AppLocalizationsMs extends AppLocalizations {
   String testNotificationBody(String time) {
     return 'Ini adalah pemberitahuan ujian dijadualkan pada $time';
   }
+
+  @override
+  String get syuruk => 'Syuruk';
+
+  @override
+  String get prayerDetail => 'Butiran Solat';
+
+  @override
+  String timeRemainingUntil(String prayer) {
+    return 'Masa berbaki sehingga $prayer';
+  }
+
+  @override
+  String prayerIsOngoing(String prayer) {
+    return '$prayer sedang berlangsung';
+  }
+
+  @override
+  String nextPrayerIn(String prayer, String time) {
+    return 'Seterusnya: $prayer dalam $time';
+  }
+
+  @override
+  String prayerTimeHasEnded(String prayer) {
+    return 'Waktu solat $prayer telah berakhir';
+  }
+
+  @override
+  String get nextPrayerHasStarted => 'Solat seterusnya telah bermula';
+
+  @override
+  String get prayerCompleted => 'Solat selesai';
+
+  @override
+  String get dateInformation => 'Maklumat Tarikh';
+
+  @override
+  String get gregorian => 'Gregorian';
+
+  @override
+  String get hijri => 'Hijri';
+
+  @override
+  String get currentTime => 'Masa Semasa';
+
+  @override
+  String get active => 'AKTIF';
+
+  @override
+  String get ended => 'BERAKHIR';
+
+  @override
+  String get upcoming => 'AKAN DATANG';
 }

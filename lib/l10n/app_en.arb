@@ -104,5 +104,51 @@
         "type": "String"
       }
     }
-  }
+  },
+  "syuruk": "Syuruk",
+  "prayerDetail": "Prayer Detail",
+  "timeRemainingUntil": "Time remaining until {prayer}",
+  "@timeRemainingUntil": {
+    "placeholders": {
+      "prayer": {
+        "type": "String"
+      }
+    }
+  },
+  "prayerIsOngoing": "{prayer} is ongoing",
+  "@prayerIsOngoing": {
+    "placeholders": {
+      "prayer": {
+        "type": "String"
+      }
+    }
+  },
+  "nextPrayerIn": "Next: {prayer} in {time}",
+  "@nextPrayerIn": {
+    "placeholders": {
+      "prayer": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "prayerTimeHasEnded": "{prayer} prayer time has ended",
+  "@prayerTimeHasEnded": {
+    "placeholders": {
+      "prayer": {
+        "type": "String"
+      }
+    }
+  },
+  "nextPrayerHasStarted": "Next prayer has started",
+  "prayerCompleted": "Prayer completed",
+  "dateInformation": "Date Information",
+  "gregorian": "Gregorian",
+  "hijri": "Hijri",
+  "currentTime": "Current Time",
+  "active": "ACTIVE",
+  "ended": "ENDED",
+  "upcoming": "UPCOMING"
 }

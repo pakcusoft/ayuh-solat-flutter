@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/prayer_time.dart';
+import '../l10n/app_localizations.dart';
 
 class PrayerDetailScreen extends StatefulWidget {
   final String prayerName;
@@ -54,13 +55,16 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
   void _calculateCountdown() {
     final now = DateTime.now();
     final prayerDateTime = _getPrayerDateTime(widget.prayerTime);
+    final l10n = AppLocalizations.of(context);
+    
+    if (l10n == null) return; // Return early if localization is not available
     
     if (prayerDateTime.isAfter(now)) {
       // Prayer time is in the future - show countdown
       setState(() {
         _countdown = prayerDateTime.difference(now);
         _isPrayerTimePassed = false;
-        _statusText = 'Time remaining until ${widget.prayerName}';
+        _statusText = l10n.timeRemainingUntil(widget.prayerName);
         _countdownText = _formatCountdown(_countdown);
       });
     } else {
@@ -71,13 +75,13 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
       if (nextPrayerDateTime != null && now.isBefore(nextPrayerDateTime)) {
         // Current prayer time has started but next prayer hasn't - show elapsed time
         final elapsed = now.difference(prayerDateTime);
-        final nextPrayerName = _getNextPrayerName();
+        final nextPrayerName = _getLocalizedPrayerName(_getNextPrayerName(), l10n);
         final timeToNextPrayer = nextPrayerDateTime.difference(now);
         
         setState(() {
           _countdown = elapsed;
           _isPrayerTimePassed = true;
-          _statusText = '${widget.prayerName} is ongoing • Next: $nextPrayerName in ${_formatCountdown(timeToNextPrayer)}';
+          _statusText = '${l10n.prayerIsOngoing(widget.prayerName)} • ${l10n.nextPrayerIn(nextPrayerName, _formatCountdown(timeToNextPrayer))}';
           _countdownText = _formatCountdown(elapsed);
         });
       } else if (nextPrayerDateTime != null && now.isAtSameMomentAs(nextPrayerDateTime)) {
@@ -86,8 +90,8 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
         setState(() {
           _countdown = elapsed;
           _isPrayerTimePassed = true;
-          _statusText = '${widget.prayerName} prayer time has ended';
-          _countdownText = 'Next prayer has started';
+          _statusText = l10n.prayerTimeHasEnded(widget.prayerName);
+          _countdownText = l10n.nextPrayerHasStarted;
         });
       } else if (nextPrayerDateTime != null && now.isAfter(nextPrayerDateTime)) {
         // Next prayer has already started - show prayer completed
@@ -95,8 +99,8 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
         setState(() {
           _countdown = elapsed;
           _isPrayerTimePassed = true;
-          _statusText = '${widget.prayerName} prayer time has ended';
-          _countdownText = 'Prayer completed';
+          _statusText = l10n.prayerTimeHasEnded(widget.prayerName);
+          _countdownText = l10n.prayerCompleted;
         });
       } else {
         // This is the last prayer of the day (Isha) - show elapsed time until midnight
@@ -107,7 +111,7 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
         setState(() {
           _countdown = elapsed;
           _isPrayerTimePassed = true;
-          _statusText = '${widget.prayerName} is ongoing • Next: Fajr in ${_formatCountdown(timeToMidnight)}';
+          _statusText = '${l10n.prayerIsOngoing(widget.prayerName)} • ${l10n.nextPrayerIn(l10n.fajr, _formatCountdown(timeToMidnight))}';
           _countdownText = _formatCountdown(elapsed);
         });
       }
@@ -227,12 +231,36 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
     
     return prayerNameMap[localizedName] ?? localizedName;
   }
+  
+  // Helper method to get localized prayer name from English prayer name
+  String _getLocalizedPrayerName(String? englishName, AppLocalizations l10n) {
+    if (englishName == null) return '';
+    
+    switch (englishName) {
+      case 'Fajr':
+        return l10n.fajr;
+      case 'Syuruk':
+        return l10n.syuruk;
+      case 'Dhuhr':
+        return l10n.dhuhr;
+      case 'Asr':
+        return l10n.asr;
+      case 'Maghrib':
+        return l10n.maghrib;
+      case 'Isha':
+        return l10n.isha;
+      default:
+        return englishName;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.prayerName} Prayer'),
+        title: Text('${widget.prayerName} ${l10n.prayerTime}'),
         backgroundColor: widget.color.withOpacity(0.1),
         foregroundColor: widget.color,
         elevation: 0,
@@ -386,7 +414,7 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Date Information',
+                              l10n.dateInformation,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -396,9 +424,9 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
                           ],
                         ),
                         const SizedBox(height: 12),
-                        _buildInfoRow('Gregorian', '${widget.prayerTimeData.day}, ${widget.prayerTimeData.date}'),
-                        _buildInfoRow('Hijri', widget.prayerTimeData.hijri),
-                        _buildInfoRow('Current Time', DateFormat('HH:mm:ss').format(DateTime.now())),
+                        _buildInfoRow(l10n.gregorian, '${widget.prayerTimeData.day}, ${widget.prayerTimeData.date}'),
+                        _buildInfoRow(l10n.hijri, widget.prayerTimeData.hijri),
+                        _buildInfoRow(l10n.currentTime, DateFormat('HH:mm:ss').format(DateTime.now())),
                       ],
                     ),
                   ),
@@ -439,13 +467,13 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
                       const SizedBox(width: 8),
                       Text(
                         _isPrayerTimePassed 
-                            ? (_statusText.contains('ongoing') ? 'ACTIVE' : 'ENDED')
-                            : 'UPCOMING',
+                            ? (_statusText.contains('ongoing') || _statusText.contains('sedang berlangsung') ? l10n.active : l10n.ended)
+                            : l10n.upcoming,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: _isPrayerTimePassed 
-                              ? (_statusText.contains('ongoing') 
+                              ? (_statusText.contains('ongoing') || _statusText.contains('sedang berlangsung')
                                   ? Colors.green[700] 
                                   : Colors.orange[700])
                               : widget.color,

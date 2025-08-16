@@ -397,6 +397,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This is a test notification scheduled at {time}'**
   String testNotificationBody(String time);
+
+  /// No description provided for @syuruk.
+  ///
+  /// In en, this message translates to:
+  /// **'Syuruk'**
+  String get syuruk;
+
+  /// No description provided for @prayerDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Prayer Detail'**
+  String get prayerDetail;
+
+  /// No description provided for @timeRemainingUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Time remaining until {prayer}'**
+  String timeRemainingUntil(String prayer);
+
+  /// No description provided for @prayerIsOngoing.
+  ///
+  /// In en, this message translates to:
+  /// **'{prayer} is ongoing'**
+  String prayerIsOngoing(String prayer);
+
+  /// No description provided for @nextPrayerIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: {prayer} in {time}'**
+  String nextPrayerIn(String prayer, String time);
+
+  /// No description provided for @prayerTimeHasEnded.
+  ///
+  /// In en, this message translates to:
+  /// **'{prayer} prayer time has ended'**
+  String prayerTimeHasEnded(String prayer);
+
+  /// No description provided for @nextPrayerHasStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Next prayer has started'**
+  String get nextPrayerHasStarted;
+
+  /// No description provided for @prayerCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Prayer completed'**
+  String get prayerCompleted;
+
+  /// No description provided for @dateInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Date Information'**
+  String get dateInformation;
+
+  /// No description provided for @gregorian.
+  ///
+  /// In en, this message translates to:
+  /// **'Gregorian'**
+  String get gregorian;
+
+  /// No description provided for @hijri.
+  ///
+  /// In en, this message translates to:
+  /// **'Hijri'**
+  String get hijri;
+
+  /// No description provided for @currentTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Time'**
+  String get currentTime;
+
+  /// No description provided for @active.
+  ///
+  /// In en, this message translates to:
+  /// **'ACTIVE'**
+  String get active;
+
+  /// No description provided for @ended.
+  ///
+  /// In en, this message translates to:
+  /// **'ENDED'**
+  String get ended;
+
+  /// No description provided for @upcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'UPCOMING'**
+  String get upcoming;
 }
 
 class _AppLocalizationsDelegate

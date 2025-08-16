@@ -176,4 +176,57 @@ class AppLocalizationsEn extends AppLocalizations {
   String testNotificationBody(String time) {
     return 'This is a test notification scheduled at $time';
   }
+
+  @override
+  String get syuruk => 'Syuruk';
+
+  @override
+  String get prayerDetail => 'Prayer Detail';
+
+  @override
+  String timeRemainingUntil(String prayer) {
+    return 'Time remaining until $prayer';
+  }
+
+  @override
+  String prayerIsOngoing(String prayer) {
+    return '$prayer is ongoing';
+  }
+
+  @override
+  String nextPrayerIn(String prayer, String time) {
+    return 'Next: $prayer in $time';
+  }
+
+  @override
+  String prayerTimeHasEnded(String prayer) {
+    return '$prayer prayer time has ended';
+  }
+
+  @override
+  String get nextPrayerHasStarted => 'Next prayer has started';
+
+  @override
+  String get prayerCompleted => 'Prayer completed';
+
+  @override
+  String get dateInformation => 'Date Information';
+
+  @override
+  String get gregorian => 'Gregorian';
+
+  @override
+  String get hijri => 'Hijri';
+
+  @override
+  String get currentTime => 'Current Time';
+
+  @override
+  String get active => 'ACTIVE';
+
+  @override
+  String get ended => 'ENDED';
+
+  @override
+  String get upcoming => 'UPCOMING';
 }
