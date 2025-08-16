@@ -66,7 +66,7 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
     final now = DateTime.now();
     final prayerDateTime = _getPrayerDateTime(widget.prayerTime);
     final l10n = AppLocalization.of(context);
-    
+
     if (prayerDateTime.isAfter(now)) {
       // Prayer time is in the future - show countdown
       setState(() {
@@ -78,21 +78,28 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
     } else {
       // Prayer time has passed - check if next prayer has started
       final nextPrayerTime = _getNextPrayerTime();
-      final nextPrayerDateTime = nextPrayerTime != null ? _getPrayerDateTime(nextPrayerTime) : null;
-      
+      final nextPrayerDateTime = nextPrayerTime != null
+          ? _getPrayerDateTime(nextPrayerTime)
+          : null;
+
       if (nextPrayerDateTime != null && now.isBefore(nextPrayerDateTime)) {
         // Current prayer time has started but next prayer hasn't - show elapsed time
         final elapsed = now.difference(prayerDateTime);
-        final nextPrayerName = _getLocalizedPrayerName(_getNextPrayerName(), l10n);
+        final nextPrayerName = _getLocalizedPrayerName(
+          _getNextPrayerName(),
+          l10n,
+        );
         final timeToNextPrayer = nextPrayerDateTime.difference(now);
-        
+
         setState(() {
           _countdown = elapsed;
           _isPrayerTimePassed = true;
-          _statusText = '${l10n.prayerIsOngoing(widget.prayerName)} • ${l10n.nextPrayerIn(nextPrayerName, _formatCountdown(timeToNextPrayer))}';
+          _statusText =
+              '${l10n.prayerIsOngoing(widget.prayerName)} • ${l10n.nextPrayerIn(nextPrayerName, _formatCountdown(timeToNextPrayer))}';
           _countdownText = _formatCountdown(elapsed);
         });
-      } else if (nextPrayerDateTime != null && now.isAtSameMomentAs(nextPrayerDateTime)) {
+      } else if (nextPrayerDateTime != null &&
+          now.isAtSameMomentAs(nextPrayerDateTime)) {
         // Next prayer time has just started - show prayer completed
         final elapsed = now.difference(prayerDateTime);
         setState(() {
@@ -101,7 +108,8 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
           _statusText = l10n.prayerTimeHasEnded(widget.prayerName);
           _countdownText = l10n.nextPrayerHasStarted;
         });
-      } else if (nextPrayerDateTime != null && now.isAfter(nextPrayerDateTime)) {
+      } else if (nextPrayerDateTime != null &&
+          now.isAfter(nextPrayerDateTime)) {
         // Next prayer has already started - show prayer completed
         final elapsed = now.difference(prayerDateTime);
         setState(() {
@@ -115,11 +123,12 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
         final elapsed = now.difference(prayerDateTime);
         final midnight = DateTime(now.year, now.month, now.day + 1);
         final timeToMidnight = midnight.difference(now);
-        
+
         setState(() {
           _countdown = elapsed;
           _isPrayerTimePassed = true;
-          _statusText = '${l10n.prayerIsOngoing(widget.prayerName)} • ${l10n.nextPrayerIn(l10n.fajr, _formatCountdown(timeToMidnight))}';
+          _statusText =
+              '${l10n.prayerIsOngoing(widget.prayerName)} • ${l10n.nextPrayerIn(l10n.fajr, _formatCountdown(timeToMidnight))}';
           _countdownText = _formatCountdown(elapsed);
         });
       }
@@ -131,16 +140,16 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
     final timeParts = time.split(':');
     final hour = int.parse(timeParts[0]);
     final minute = int.parse(timeParts[1]);
-    
+
     var prayerDateTime = DateTime(now.year, now.month, now.day, hour, minute);
-    
-    // If the prayer time has passed today and it's before midnight, 
+
+    // If the prayer time has passed today and it's before midnight,
     // it might be for tomorrow (like Fajr)
     final englishPrayerName = _getEnglishPrayerName(widget.prayerName);
     if (prayerDateTime.isBefore(now) && englishPrayerName == 'Fajr') {
       prayerDateTime = prayerDateTime.add(const Duration(days: 1));
     }
-    
+
     return prayerDateTime;
   }
 
@@ -156,15 +165,17 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
 
     // Convert localized prayer name to English for comparison
     final englishPrayerName = _getEnglishPrayerName(widget.prayerName);
-    
+
     // Find current prayer index
-    int currentIndex = prayers.indexWhere((prayer) => prayer['name'] == englishPrayerName);
-    
+    int currentIndex = prayers.indexWhere(
+      (prayer) => prayer['name'] == englishPrayerName,
+    );
+
     // Return next prayer time, or null if this is the last prayer
     if (currentIndex >= 0 && currentIndex < prayers.length - 1) {
       return prayers[currentIndex + 1]['time'] as String;
     }
-    
+
     return null;
   }
 
@@ -180,15 +191,17 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
 
     // Convert localized prayer name to English for comparison
     final englishPrayerName = _getEnglishPrayerName(widget.prayerName);
-    
+
     // Find current prayer index
-    int currentIndex = prayers.indexWhere((prayer) => prayer['name'] == englishPrayerName);
-    
+    int currentIndex = prayers.indexWhere(
+      (prayer) => prayer['name'] == englishPrayerName,
+    );
+
     // Return next prayer name, or null if this is the last prayer
     if (currentIndex >= 0 && currentIndex < prayers.length - 1) {
       return prayers[currentIndex + 1]['name'] as String;
     }
-    
+
     return null;
   }
 
@@ -206,7 +219,7 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
 
   String _formatTime(String time) {
     if (time == '00:00:00') return '-';
-    
+
     try {
       final parts = time.split(':');
       if (parts.length >= 2) {
@@ -225,7 +238,7 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
     const prayerNameMap = {
       // English names (unchanged)
       'Fajr': 'Fajr',
-      'Syuruk': 'Syuruk', 
+      'Syuruk': 'Syuruk',
       'Dhuhr': 'Dhuhr',
       'Asr': 'Asr',
       'Maghrib': 'Maghrib',
@@ -236,14 +249,14 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
       'Asar': 'Asr',
       'Isyak': 'Isha',
     };
-    
+
     return prayerNameMap[localizedName] ?? localizedName;
   }
-  
+
   // Helper method to get localized prayer name from English prayer name
   String _getLocalizedPrayerName(String? englishName, AppLocalization l10n) {
     if (englishName == null) return '';
-    
+
     switch (englishName) {
       case 'Fajr':
         return l10n.fajr;
@@ -265,7 +278,7 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalization.of(context);
-    
+
     // Provide fallback values if localization is not ready
     final fallbackTitle = l10n.prayerTime ?? 'Prayer Time';
     final fallbackDateInfo = l10n.dateInformation ?? 'Date Information';
@@ -275,10 +288,10 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
     final fallbackActive = l10n.active ?? 'ACTIVE';
     final fallbackEnded = l10n.ended ?? 'ENDED';
     final fallbackUpcoming = l10n.upcoming ?? 'UPCOMING';
-    
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.prayerName} $fallbackTitle'),
+        title: Text('$fallbackTitle: ${widget.prayerName}'),
         backgroundColor: widget.color.withOpacity(0.1),
         foregroundColor: widget.color,
         elevation: 0,
@@ -323,11 +336,7 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
                     ),
                     child: Column(
                       children: [
-                        Icon(
-                          widget.icon,
-                          size: 70,
-                          color: widget.color,
-                        ),
+                        Icon(widget.icon, size: 70, color: widget.color),
                         const SizedBox(height: 16),
                         Text(
                           widget.prayerName,
@@ -351,9 +360,9 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Countdown Card
                 Card(
                   elevation: 6,
@@ -381,12 +390,12 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
                             vertical: 14,
                           ),
                           decoration: BoxDecoration(
-                            color: _isPrayerTimePassed 
+                            color: _isPrayerTimePassed
                                 ? Colors.orange.withOpacity(0.1)
                                 : widget.color.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: _isPrayerTimePassed 
+                              color: _isPrayerTimePassed
                                   ? Colors.orange.withOpacity(0.3)
                                   : widget.color.withOpacity(0.3),
                               width: 2,
@@ -397,7 +406,7 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
-                              color: _isPrayerTimePassed 
+                              color: _isPrayerTimePassed
                                   ? Colors.orange[700]
                                   : widget.color,
                               letterSpacing: 1,
@@ -409,9 +418,9 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Prayer Info
                 Card(
                   elevation: 4,
@@ -442,16 +451,25 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
                           ],
                         ),
                         const SizedBox(height: 12),
-                        _buildInfoRow(fallbackGregorian, '${widget.prayerTimeData.day}, ${widget.prayerTimeData.date}'),
-                        _buildInfoRow(fallbackHijri, widget.prayerTimeData.hijri),
-                        _buildInfoRow(fallbackCurrentTime, DateFormat('HH:mm:ss').format(DateTime.now())),
+                        _buildInfoRow(
+                          fallbackGregorian,
+                          '${widget.prayerTimeData.day}, ${widget.prayerTimeData.date}',
+                        ),
+                        _buildInfoRow(
+                          fallbackHijri,
+                          widget.prayerTimeData.hijri,
+                        ),
+                        _buildInfoRow(
+                          fallbackCurrentTime,
+                          DateFormat('HH:mm:ss').format(DateTime.now()),
+                        ),
                       ],
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Status indicator
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -459,10 +477,10 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: _isPrayerTimePassed 
-                        ? (_statusText.contains('ongoing') 
-                            ? Colors.green.withOpacity(0.2) 
-                            : Colors.orange.withOpacity(0.2))
+                    color: _isPrayerTimePassed
+                        ? (_statusText.contains('ongoing')
+                              ? Colors.green.withOpacity(0.2)
+                              : Colors.orange.withOpacity(0.2))
                         : widget.color.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -470,37 +488,43 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        _isPrayerTimePassed 
-                            ? (_statusText.contains('ongoing') 
-                                ? Icons.play_circle_filled 
-                                : Icons.check_circle)
+                        _isPrayerTimePassed
+                            ? (_statusText.contains('ongoing')
+                                  ? Icons.play_circle_filled
+                                  : Icons.check_circle)
                             : Icons.timer,
                         size: 16,
-                        color: _isPrayerTimePassed 
-                            ? (_statusText.contains('ongoing') 
-                                ? Colors.green[700] 
-                                : Colors.orange[700])
+                        color: _isPrayerTimePassed
+                            ? (_statusText.contains('ongoing')
+                                  ? Colors.green[700]
+                                  : Colors.orange[700])
                             : widget.color,
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        _isPrayerTimePassed 
-                            ? (_statusText.contains('ongoing') || _statusText.contains('sedang berlangsung') ? fallbackActive : fallbackEnded)
+                        _isPrayerTimePassed
+                            ? (_statusText.contains('ongoing') ||
+                                      _statusText.contains('sedang berlangsung')
+                                  ? fallbackActive
+                                  : fallbackEnded)
                             : fallbackUpcoming,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: _isPrayerTimePassed 
-                              ? (_statusText.contains('ongoing') || _statusText.contains('sedang berlangsung')
-                                  ? Colors.green[700] 
-                                  : Colors.orange[700])
+                          color: _isPrayerTimePassed
+                              ? (_statusText.contains('ongoing') ||
+                                        _statusText.contains(
+                                          'sedang berlangsung',
+                                        )
+                                    ? Colors.green[700]
+                                    : Colors.orange[700])
                               : widget.color,
                         ),
                       ),
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(height: 24), // Add bottom padding
               ],
             ),
@@ -516,19 +540,10 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
-          ),
+          Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
           ),
         ],
       ),
