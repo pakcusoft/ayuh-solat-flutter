@@ -415,6 +415,59 @@ class AppLocalization {
   // Prayer name for Syuruk
   String get syuruk => locale.languageCode == 'en' ? 'Syuruk' : 'Syuruk';
   
+  // Prayer Detail Screen specific strings
+  String timeRemainingUntil(String prayer) => locale.languageCode == 'en'
+      ? 'Time remaining until $prayer'
+      : 'Masa berbaki sehingga $prayer';
+      
+  String prayerIsOngoing(String prayer) => locale.languageCode == 'en'
+      ? '$prayer is ongoing'
+      : '$prayer sedang berlangsung';
+      
+  String nextPrayerIn(String prayer, String time) => locale.languageCode == 'en'
+      ? 'Next: $prayer in $time'
+      : 'Seterusnya: $prayer dalam $time';
+      
+  String prayerTimeHasEnded(String prayer) => locale.languageCode == 'en'
+      ? '$prayer prayer time has ended'
+      : 'Waktu solat $prayer telah berakhir';
+      
+  String get nextPrayerHasStarted => locale.languageCode == 'en'
+      ? 'Next prayer has started'
+      : 'Solat seterusnya telah bermula';
+      
+  String get prayerCompleted => locale.languageCode == 'en'
+      ? 'Prayer completed'
+      : 'Solat selesai';
+      
+  String get dateInformation => locale.languageCode == 'en'
+      ? 'Date Information'
+      : 'Maklumat Tarikh';
+      
+  String get gregorian => locale.languageCode == 'en'
+      ? 'Gregorian'
+      : 'Gregorian';
+      
+  String get hijri => locale.languageCode == 'en'
+      ? 'Hijri'
+      : 'Hijri';
+      
+  String get currentTime => locale.languageCode == 'en'
+      ? 'Current Time'
+      : 'Masa Semasa';
+      
+  String get active => locale.languageCode == 'en'
+      ? 'ACTIVE'
+      : 'AKTIF';
+      
+  String get ended => locale.languageCode == 'en'
+      ? 'ENDED'
+      : 'BERAKHIR';
+      
+  String get upcoming => locale.languageCode == 'en'
+      ? 'UPCOMING'
+      : 'AKAN DATANG';
+  
   // Offline mode
   String get offlineMode => locale.languageCode == 'en'
       ? 'Offline Mode'

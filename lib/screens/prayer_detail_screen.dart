@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/prayer_time.dart';
-import '../l10n/app_localizations.dart';
+import '../localization/app_localization.dart';
 
 class PrayerDetailScreen extends StatefulWidget {
   final String prayerName;
@@ -30,12 +30,22 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
   bool _isPrayerTimePassed = false;
   String _countdownText = '';
   String _statusText = '';
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _calculateCountdown();
-    _startTimer();
+    // Don't call _calculateCountdown here - wait for didChangeDependencies
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isInitialized) {
+      _calculateCountdown();
+      _startTimer();
+      _isInitialized = true;
+    }
   }
 
   @override
@@ -55,9 +65,7 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
   void _calculateCountdown() {
     final now = DateTime.now();
     final prayerDateTime = _getPrayerDateTime(widget.prayerTime);
-    final l10n = AppLocalizations.of(context);
-    
-    if (l10n == null) return; // Return early if localization is not available
+    final l10n = AppLocalization.of(context);
     
     if (prayerDateTime.isAfter(now)) {
       // Prayer time is in the future - show countdown
@@ -233,7 +241,7 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
   }
   
   // Helper method to get localized prayer name from English prayer name
-  String _getLocalizedPrayerName(String? englishName, AppLocalizations l10n) {
+  String _getLocalizedPrayerName(String? englishName, AppLocalization l10n) {
     if (englishName == null) return '';
     
     switch (englishName) {
@@ -256,11 +264,21 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalization.of(context);
+    
+    // Provide fallback values if localization is not ready
+    final fallbackTitle = l10n.prayerTime ?? 'Prayer Time';
+    final fallbackDateInfo = l10n.dateInformation ?? 'Date Information';
+    final fallbackGregorian = l10n.gregorian ?? 'Gregorian';
+    final fallbackHijri = l10n.hijri ?? 'Hijri';
+    final fallbackCurrentTime = l10n.currentTime ?? 'Current Time';
+    final fallbackActive = l10n.active ?? 'ACTIVE';
+    final fallbackEnded = l10n.ended ?? 'ENDED';
+    final fallbackUpcoming = l10n.upcoming ?? 'UPCOMING';
     
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.prayerName} ${l10n.prayerTime}'),
+        title: Text('${widget.prayerName} $fallbackTitle'),
         backgroundColor: widget.color.withOpacity(0.1),
         foregroundColor: widget.color,
         elevation: 0,
@@ -414,7 +432,7 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              l10n.dateInformation,
+                              fallbackDateInfo,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -424,9 +442,9 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
                           ],
                         ),
                         const SizedBox(height: 12),
-                        _buildInfoRow(l10n.gregorian, '${widget.prayerTimeData.day}, ${widget.prayerTimeData.date}'),
-                        _buildInfoRow(l10n.hijri, widget.prayerTimeData.hijri),
-                        _buildInfoRow(l10n.currentTime, DateFormat('HH:mm:ss').format(DateTime.now())),
+                        _buildInfoRow(fallbackGregorian, '${widget.prayerTimeData.day}, ${widget.prayerTimeData.date}'),
+                        _buildInfoRow(fallbackHijri, widget.prayerTimeData.hijri),
+                        _buildInfoRow(fallbackCurrentTime, DateFormat('HH:mm:ss').format(DateTime.now())),
                       ],
                     ),
                   ),
@@ -467,8 +485,8 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
                       const SizedBox(width: 8),
                       Text(
                         _isPrayerTimePassed 
-                            ? (_statusText.contains('ongoing') || _statusText.contains('sedang berlangsung') ? l10n.active : l10n.ended)
-                            : l10n.upcoming,
+                            ? (_statusText.contains('ongoing') || _statusText.contains('sedang berlangsung') ? fallbackActive : fallbackEnded)
+                            : fallbackUpcoming,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
